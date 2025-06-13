@@ -1,4 +1,4 @@
-# PIPEIQ Protocol
+# PIPEIQ Framework
 
 > A decentralized agent protocol to connect AI tools across Web2 and Web3—models, MCP servers, decentralized compute, and more.
 
@@ -8,7 +8,7 @@
 ---
 
 ## Overview
-PIPEIQ is an open-source protocol that enables developers to seamlessly connect and orchestrate AI tools across the Web2 and Web3 ecosystems. It abstracts away the complexities of identity, messaging, and orchestration by providing standardized primitives for agent coordination, tool invocation, and cross-network integration.
+PIPEIQ is an open-source framework that enables developers to seamlessly connect and orchestrate AI tools across the Web2 and Web3 ecosystems. It abstracts away the complexities of identity, messaging, and orchestration by providing standardized primitives for agent coordination, tool invocation, and cross-network integration.
 
 With native support for models, MCP servers, decentralized compute providers, and on-chain identity frameworks, PIPEIQ aims to serve as a universal protocol layer for the AI economy—supporting autonomous, composable, and verifiable AI agents.
 
@@ -44,7 +44,7 @@ With native support for models, MCP servers, decentralized compute providers, an
 
 ## Architecture
 
-The protocol is built on two foundational layers:
+The framework is built on two foundational layers:
 
 ### 1. Blockchain-Native Primitives
 - ✅ Solana Smart Contracts (Rust)
@@ -59,7 +59,7 @@ The protocol is built on two foundational layers:
 ---
 
 ## Contributing
-We welcome contributions from protocol developers, cryptographers, and AI researchers. To get started:
+We welcome contributions from framework developers, cryptographers, and AI researchers. To get started:
 
 1. Fork this repository
 2. Read the [CONTRIBUTING.md](CONTRIBUTING.md) guide
