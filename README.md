@@ -340,3 +340,381 @@ The SDK raises custom exceptions for different error scenarios:
 - `PipeIQError`: Base exception for all SDK errors
 - `ConnectionError`: Raised for network/API connection issues
 - `AuthenticationError`: Raised for authentication/authorization failures
+
+## Prime Intellect Integration
+
+The Prime Intellect integration provides comprehensive GPU resource management and monitoring capabilities.
+
+### Resource Scheduling
+
+The service supports advanced resource scheduling capabilities:
+
+```python
+from pipeiq import (
+    PrimeIntellectService,
+    ScheduleType,
+    PodPriority,
+    ResourceSchedule
+)
+
+# Create a one-time schedule
+schedule = ResourceSchedule(
+    schedule_type=ScheduleType.ONE_TIME,
+    start_time=datetime.utcnow() + timedelta(hours=1)
+)
+
+# Schedule a pod
+scheduled_pod = await service.schedule_pod(
+    pod_config={
+        "name": "training-pod",
+        "gpu_type": "a100",
+        "image": "nvidia/cuda:11.8.0"
+    },
+    schedule=schedule,
+    priority=PodPriority.HIGH
+)
+
+# Create a recurring schedule
+recurring_schedule = ResourceSchedule(
+    schedule_type=ScheduleType.RECURRING,
+    start_time=datetime.utcnow(),
+    end_time=datetime.utcnow() + timedelta(days=7),
+    recurrence={
+        "frequency": "daily",
+        "interval": 1
+    }
+)
+
+# Get scheduled pods
+scheduled_pods = await service.get_scheduled_pods(
+    status="scheduled",
+    start_time=datetime.utcnow(),
+    end_time=datetime.utcnow() + timedelta(days=1)
+)
+
+# Cancel a scheduled pod
+await service.cancel_scheduled_pod("schedule_id")
+```
+
+### Cost Optimization
+
+The service provides advanced cost optimization features:
+
+```python
+from pipeiq import (
+    PrimeIntellectService,
+    OptimizationStrategy,
+    CostOptimizer
+)
+
+# Create a cost optimizer
+optimizer = CostOptimizer(
+    strategy=OptimizationStrategy.COST,
+    constraints={
+        "max_cost": 1000.0,
+        "min_performance": 0.8
+    }
+)
+
+# Optimize costs
+result = await service.optimize_costs(
+    optimizer=optimizer,
+    pod_ids=["pod1", "pod2"]
+)
+
+# Get cost recommendations
+recommendations = await service.get_cost_recommendations(
+    pod_ids=["pod1"],
+    strategy=OptimizationStrategy.COST
+)
+
+# Get cost forecast
+forecast = await service.get_cost_forecast(
+    start_time=datetime.utcnow(),
+    end_time=datetime.utcnow() + timedelta(days=7),
+    pod_ids=["pod1", "pod2"]
+)
+```
+
+### Advanced Pod Management
+
+The service provides enhanced pod management capabilities:
+
+```python
+from pipeiq import (
+    PrimeIntellectService,
+    PodPriority,
+    ResourceType
+)
+
+# Update pod priority
+await service.update_pod_priority(
+    pod_id="pod1",
+    priority=PodPriority.HIGH
+)
+
+# Get resource availability
+availability = await service.get_resource_availability(
+    start_time=datetime.utcnow(),
+    end_time=datetime.utcnow() + timedelta(hours=1),
+    resource_type=ResourceType.GPU
+)
+
+# Get resource utilization
+utilization = await service.get_resource_utilization(
+    start_time=datetime.utcnow() - timedelta(hours=1),
+    end_time=datetime.utcnow(),
+    resource_type=ResourceType.GPU
+)
+```
+
+### Basic Usage
+
+```python
+from pipeiq import PrimeIntellectService, PodStatus, ResourceType
+
+# Initialize the service
+service = PrimeIntellectService(api_key="your_api_key")
+
+# Create a pod
+pod = await service.create_pod(
+    name="training-pod",
+    gpu_type="a100",
+    image="nvidia/cuda:11.8.0"
+)
+
+# Get pod status
+status = await service.get_pod_status(pod["id"])
+
+# Monitor resources
+metrics = await service.get_resource_metrics(
+    pod["id"],
+    resource_type=ResourceType.GPU_UTILIZATION
+)
+
+# Delete the pod
+await service.delete_pod(pod["id"])
+```
+
+### Batch Operations
+
+The service supports batch operations for managing multiple pods efficiently:
+
+```python
+# Create multiple pods in a batch
+pods = await service.batch_create_pods([
+    {
+        "name": "pod1",
+        "gpu_type": "a100",
+        "image": "nvidia/cuda:11.8.0"
+    },
+    {
+        "name": "pod2",
+        "gpu_type": "a100",
+        "image": "nvidia/cuda:11.8.0"
+    }
+])
+
+# Delete multiple pods in a batch
+result = await service.batch_delete_pods([pod["id"] for pod in pods])
+
+# Monitor batch operation status
+status = await service.get_batch_operation_status("operation_id")
+
+# Cancel a batch operation if needed
+await service.cancel_batch_operation("operation_id")
+```
+
+### Resource Quotas
+
+Manage and monitor resource quotas:
+
+```python
+from pipeiq import QuotaType
+
+# Get current quotas
+quotas = await service.get_quotas()
+
+# Get quota usage
+usage = await service.get_quota_usage(
+    quota_type=QuotaType.GPU_HOURS,
+    start_date=datetime.utcnow() - timedelta(days=7)
+)
+```
+
+### Advanced Monitoring
+
+The service provides detailed monitoring capabilities:
+
+```python
+from pipeiq import MonitoringInterval
+
+# Get detailed monitoring data
+data = await service.get_monitoring_data(
+    pod_id="pod1",
+    resource_type=ResourceType.GPU_UTILIZATION,
+    interval=MonitoringInterval.FIVE_MINUTES,
+    start_time=datetime.utcnow() - timedelta(hours=1)
+)
+
+# Get monitoring alerts
+alerts = await service.get_alerts(
+    pod_id="pod1",
+    severity="warning"
+)
+
+# Get statistical metrics
+stats = service.get_metric_statistics(
+    "gpu_utilization",
+    timedelta(minutes=30)
+)
+```
+
+### Metrics Tracking
+
+The service includes built-in metrics tracking with configurable history:
+
+```python
+# Initialize with custom history size
+service = PrimeIntellectService(
+    api_key="your_api_key",
+    enable_metrics_tracking=True,
+    max_history=1000
+)
+
+# Get metric statistics
+stats = service.get_metric_statistics(
+    "gpu_utilization",
+    timedelta(minutes=30)
+)
+```
+
+### Error Handling
+
+The service provides comprehensive error handling:
+
+```python
+from pipeiq import (
+    PrimeIntellectError,
+    PrimeIntellectAPIError,
+    PrimeIntellectValidationError,
+    PrimeIntellectNetworkError
+)
+
+try:
+    pod = await service.create_pod(...)
+except PrimeIntellectValidationError as e:
+    print(f"Validation error: {e}")
+except PrimeIntellectAPIError as e:
+    print(f"API error: {e}")
+except PrimeIntellectNetworkError as e:
+    print(f"Network error: {e}")
+```
+
+### Resource Scaling
+
+The service supports advanced resource scaling capabilities:
+
+```python
+from pipeiq import (
+    PrimeIntellectService,
+    ScalingPolicy,
+    ScalingConfig
+)
+
+# Configure automatic scaling
+scaling_config = ScalingConfig(
+    min_instances=1,
+    max_instances=5,
+    target_cpu_utilization=0.7,
+    target_memory_utilization=0.8,
+    cooldown_period=300,  # 5 minutes
+    policy=ScalingPolicy.AUTOMATIC
+)
+
+# Apply scaling configuration
+await service.configure_scaling("pod1", scaling_config)
+
+# Get current scaling status
+scaling_status = await service.get_scaling_status("pod1")
+```
+
+### Backup and Restore
+
+The service provides comprehensive backup and restore capabilities:
+
+```python
+from pipeiq import (
+    PrimeIntellectService,
+    BackupType,
+    BackupConfig
+)
+
+# Create a backup configuration
+backup_config = BackupConfig(
+    backup_type=BackupType.FULL,
+    retention_days=30,
+    schedule={
+        "frequency": "daily",
+        "time": "02:00"
+    },
+    include_volumes=True,
+    include_config=True
+)
+
+# Create a backup
+backup = await service.create_backup("pod1", backup_config)
+
+# List available backups
+backups = await service.list_backups("pod1", BackupType.FULL)
+
+# Restore from backup
+restore = await service.restore_from_backup(
+    "pod1",
+    "backup1",
+    restore_config={
+        "restore_volumes": True,
+        "restore_config": True
+    }
+)
+```
+
+### Advanced Networking
+
+The service offers advanced networking features:
+
+```python
+from pipeiq import (
+    PrimeIntellectService,
+    NetworkType,
+    NetworkConfig
+)
+
+# Configure network settings
+network_config = NetworkConfig(
+    network_type=NetworkType.DEDICATED,
+    bandwidth_limit=1000,  # Mbps
+    security_groups=["sg1", "sg2"],
+    vpc_id="vpc-123",
+    subnet_id="subnet-456"
+)
+
+# Apply network configuration
+await service.configure_network("pod1", network_config)
+
+# Get network statistics
+network_stats = await service.get_network_stats(
+    "pod1",
+    start_time=datetime.utcnow() - timedelta(hours=1),
+    end_time=datetime.utcnow()
+)
+
+# Update security groups
+await service.update_network_security("pod1", ["sg1", "sg2", "sg3"])
+
+# Check network availability
+availability = await service.get_network_availability(
+    NetworkType.DEDICATED,
+    region="us-west-1"
+)
+```
