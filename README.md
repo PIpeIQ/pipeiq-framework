@@ -90,6 +90,7 @@ A Solana-compatible SDK for building decentralized applications.
 
 - Solana wallet integration
 - Attestation service with versioning and audit logging
+- World Chain integration for human verification and mini apps
 - Rate limiting and retry logic
 - Comprehensive error handling
 - Webhook support
@@ -119,166 +120,168 @@ client = PipeIQClient(wallet)
 result = await client.some_method()
 ```
 
-### Attestation Service
+### World Chain Integration
 
-The attestation service provides a robust way to create, verify, and manage attestations with versioning and audit logging.
+The World Chain integration provides functionality for human verification, mini app deployment, and gas fee management.
 
 ```python
-from pipeiq import AttestationService, AttestationTemplate
+from pipeiq import WorldChainService
 from pipeiq.solana import SolanaWallet
 
 # Initialize wallet
 wallet = SolanaWallet(private_key="your_private_key")
 
-# Create attestation service with audit logging enabled
-service = AttestationService(
+# Create World Chain service
+service = WorldChainService(
     wallet,
+    base_url="https://api.world.org/v1",
     rate_limit=100,
-    webhook_secret="your_webhook_secret",
     enable_audit_logging=True
 )
 
-# Create an attestation
-attestation = await service.create_attestation(
-    data={"name": "John Doe", "age": 30},
-    attestation_type="identity"
-)
-
-# Update an attestation
-updated = await service.update_attestation(
-    attestation_id=attestation["id"],
-    data={"name": "John Doe", "age": 31},
-    reason="Age update"
-)
-
-# Get attestation versions
-versions = await service.get_attestation_versions(attestation["id"])
-for version in versions:
-    print(f"Version: {version.version}")
-    print(f"Changes: {version.changes}")
-
-# Get audit logs
-logs = await service.get_audit_logs(
-    attestation_id=attestation["id"],
-    operation="update",
-    start_time=datetime.now() - timedelta(days=7)
-)
-for log in logs:
-    print(f"Operation: {log.operation}")
-    print(f"Timestamp: {log.timestamp}")
-    print(f"Details: {log.details}")
-```
-
-### Attestation Templates
-
-Create reusable templates for attestations:
-
-```python
-template = AttestationTemplate(
-    name="identity_verification",
-    schema={
-        "type": "object",
-        "properties": {
-            "name": {"type": "string"},
-            "age": {"type": "integer"},
-            "document_id": {"type": "string"}
-        }
-    },
-    required_fields=["name", "age", "document_id"],
-    default_metadata={"version": "1.0"},
-    default_tags=["identity", "verification"],
-    default_expiry_days=30,
-    version="1.0.0"
-)
-
-# Create attestation from template
-attestation = await service.create_attestation_from_template(
-    template=template,
-    data={
-        "name": "John Doe",
-        "age": 30,
-        "document_id": "12345"
+# Verify a human using World ID
+verification = await service.verify_human(
+    proof={
+        "type": "world_id",
+        "data": "your_proof_data"
     }
 )
+
+# Check gas fee status
+gas_status = await service.get_gas_status()
+if gas_status["free_gas_available"]:
+    print("Free gas available!")
+
+# Deploy a mini app
+app = await service.deploy_mini_app(
+    app_data={
+        "name": "My Mini App",
+        "version": "1.0.0",
+        "config": {
+            "key": "value"
+        }
+    },
+    metadata={
+        "description": "A test mini app",
+        "category": "social"
+    }
+)
+
+# Get app status
+status = await service.get_mini_app_status(app["id"])
+
+# Get network information
+network_info = await service.get_network_info()
 ```
+
+### World Chain Features
+
+#### Human Verification
+- Verify users using World ID
+- Check verification status
+- Handle verification errors
+
+#### Mini App Deployment
+- Deploy apps to World Chain
+- Track deployment status
+- Manage app metadata
+- Get deployment URLs
+
+#### Gas Fee Management
+- Check free gas availability
+- Monitor gas balance
+- Track gas usage
+
+#### Network Information
+- Get network status
+- Monitor block height
+- Check gas prices
+- View network load
+
+#### Audit Logging
+- Track all operations
+- Filter logs by operation type
+- Filter logs by time range
+- Export logs for compliance
 
 ### Error Handling
 
-The SDK provides comprehensive error handling:
-
 ```python
-from pipeiq.attestation import (
-    AttestationError,
-    AttestationValidationError,
-    AttestationVersionError
+from pipeiq.world_chain import (
+    WorldChainError,
+    WorldChainValidationError,
+    WorldChainNetworkError
 )
 
 try:
-    # Create attestation with invalid data
-    await service.create_attestation_from_template(
-        template=template,
-        data={"name": "John Doe"}  # Missing required fields
-    )
-except AttestationValidationError as e:
+    # Verify a human
+    await service.verify_human(proof={"type": "world_id", "data": "invalid"})
+except WorldChainValidationError as e:
     print(f"Validation error: {e}")
-except AttestationVersionError as e:
-    print(f"Version conflict: {e}")
-except AttestationError as e:
+except WorldChainNetworkError as e:
+    print(f"Network error: {e}")
+except WorldChainError as e:
     print(f"General error: {e}")
 ```
 
-### Webhook Support
-
-Handle attestation events via webhooks:
+### Using Context Manager
 
 ```python
-from pipeiq.attestation import WebhookHandler
+async with WorldChainService(wallet) as service:
+    # Service is automatically initialized
+    result = await service.verify_human(proof={"type": "world_id", "data": "test"})
+    # Session is automatically closed when done
+```
 
-async def handle_attestation_created(event):
-    print(f"New attestation created: {event['id']}")
+### Audit Logging
 
-async def handle_attestation_updated(event):
-    print(f"Attestation updated: {event['id']}")
-    print(f"New version: {event['version']}")
+```python
+# Get all audit logs
+logs = await service.get_audit_logs()
 
-# Create webhook handler
-handler = WebhookHandler(
-    webhook_secret="your_webhook_secret",
-    handlers={
-        "attestation.created": handle_attestation_created,
-        "attestation.updated": handle_attestation_updated
-    }
+# Filter logs by operation
+verify_logs = await service.get_audit_logs(operation="verify_human")
+
+# Filter logs by time range
+recent_logs = await service.get_audit_logs(
+    start_time=datetime.now() - timedelta(days=1)
 )
 
-# Handle webhook request
-await handler.handle_webhook(request_data, request_signature)
+# Export logs
+for log in logs:
+    print(f"Operation: {log['operation']}")
+    print(f"Timestamp: {log['timestamp']}")
+    print(f"Details: {log['details']}")
 ```
 
 ## Features
 
-### Attestation Versioning
+### World Chain Integration
+- Human verification via World ID
+- Mini app deployment and management
+- Gas fee tracking and management
+- Network status monitoring
+- Comprehensive audit logging
 
+### Attestation Versioning
 - Track changes to attestations over time
 - Maintain version history with metadata
 - Compare different versions
 - Roll back to previous versions if needed
 
 ### Audit Logging
-
 - Comprehensive audit trail of all operations
 - Track who made changes and when
 - Filter logs by operation type, time range, and more
 - Export logs for compliance and auditing
 
 ### Enhanced Error Handling
-
 - Specific error types for different scenarios
 - Detailed error messages and context
 - Validation errors for data integrity
 - Version conflict handling
 
 ### Rate Limiting and Retries
-
 - Automatic rate limiting to prevent API abuse
 - Configurable retry logic for failed requests
 - Exponential backoff for retries
