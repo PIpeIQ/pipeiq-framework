@@ -84,7 +84,16 @@ MIT License. See [LICENSE](LICENSE) for details.
 
 # PipeIQ SDK
 
-A Solana-compatible SDK for connecting to different models and MCP servers. This SDK provides a simple interface for developers to interact with various AI models while leveraging Solana's blockchain capabilities for authentication and payments.
+A Solana-compatible SDK for building decentralized applications.
+
+## Features
+
+- Solana wallet integration
+- Attestation service with versioning and audit logging
+- Rate limiting and retry logic
+- Comprehensive error handling
+- Webhook support
+- Template-based attestations
 
 ## Installation
 
@@ -92,56 +101,200 @@ A Solana-compatible SDK for connecting to different models and MCP servers. This
 pip install pipeiq
 ```
 
-## Quick Start
+## Usage
+
+### Basic Usage
 
 ```python
-import asyncio
-from pipeiq import PipeIQClient, ModelConfig, MCPConfig, SolanaWallet
+from pipeiq import PipeIQClient
+from pipeiq.solana import SolanaWallet
 
-async def main():
-    # Initialize a Solana wallet (or use your existing one)
-    wallet = SolanaWallet()
-    
-    # Create the PipeIQ client
-    client = PipeIQClient(
-        api_key="your_api_key",
-        solana_wallet=wallet,
-        network="devnet"  # Use 'mainnet-beta' for production
-    )
-    
-    # Configure your model
-    model_config = ModelConfig(
-        model_id="gpt-4",
-        model_type="llm",
-        parameters={
-            "temperature": 0.7,
-            "max_tokens": 1000
-        }
-    )
-    
-    # Optionally configure an MCP server
-    mcp_config = MCPConfig(
-        server_url="https://your-mcp-server.com",
-        api_key="your_mcp_api_key"
-    )
-    
-    try:
-        # Connect to the model
-        result = await client.connect_to_model(model_config, mcp_config)
-        print(f"Connection successful: {result}")
-        
-        # Check wallet balance
-        balance = await wallet.get_balance()
-        print(f"Wallet balance: {balance} lamports")
-        
-    finally:
-        # Clean up
-        await client.close()
-        await wallet.close()
+# Initialize wallet
+wallet = SolanaWallet(private_key="your_private_key")
 
-if __name__ == "__main__":
-    asyncio.run(main())
+# Create client
+client = PipeIQClient(wallet)
+
+# Use the client
+result = await client.some_method()
 ```
+
+### Attestation Service
+
+The attestation service provides a robust way to create, verify, and manage attestations with versioning and audit logging.
+
+```python
+from pipeiq import AttestationService, AttestationTemplate
+from pipeiq.solana import SolanaWallet
+
+# Initialize wallet
+wallet = SolanaWallet(private_key="your_private_key")
+
+# Create attestation service with audit logging enabled
+service = AttestationService(
+    wallet,
+    rate_limit=100,
+    webhook_secret="your_webhook_secret",
+    enable_audit_logging=True
+)
+
+# Create an attestation
+attestation = await service.create_attestation(
+    data={"name": "John Doe", "age": 30},
+    attestation_type="identity"
+)
+
+# Update an attestation
+updated = await service.update_attestation(
+    attestation_id=attestation["id"],
+    data={"name": "John Doe", "age": 31},
+    reason="Age update"
+)
+
+# Get attestation versions
+versions = await service.get_attestation_versions(attestation["id"])
+for version in versions:
+    print(f"Version: {version.version}")
+    print(f"Changes: {version.changes}")
+
+# Get audit logs
+logs = await service.get_audit_logs(
+    attestation_id=attestation["id"],
+    operation="update",
+    start_time=datetime.now() - timedelta(days=7)
+)
+for log in logs:
+    print(f"Operation: {log.operation}")
+    print(f"Timestamp: {log.timestamp}")
+    print(f"Details: {log.details}")
+```
+
+### Attestation Templates
+
+Create reusable templates for attestations:
+
+```python
+template = AttestationTemplate(
+    name="identity_verification",
+    schema={
+        "type": "object",
+        "properties": {
+            "name": {"type": "string"},
+            "age": {"type": "integer"},
+            "document_id": {"type": "string"}
+        }
+    },
+    required_fields=["name", "age", "document_id"],
+    default_metadata={"version": "1.0"},
+    default_tags=["identity", "verification"],
+    default_expiry_days=30,
+    version="1.0.0"
+)
+
+# Create attestation from template
+attestation = await service.create_attestation_from_template(
+    template=template,
+    data={
+        "name": "John Doe",
+        "age": 30,
+        "document_id": "12345"
+    }
+)
+```
+
+### Error Handling
+
+The SDK provides comprehensive error handling:
+
+```python
+from pipeiq.attestation import (
+    AttestationError,
+    AttestationValidationError,
+    AttestationVersionError
+)
+
+try:
+    # Create attestation with invalid data
+    await service.create_attestation_from_template(
+        template=template,
+        data={"name": "John Doe"}  # Missing required fields
+    )
+except AttestationValidationError as e:
+    print(f"Validation error: {e}")
+except AttestationVersionError as e:
+    print(f"Version conflict: {e}")
+except AttestationError as e:
+    print(f"General error: {e}")
+```
+
+### Webhook Support
+
+Handle attestation events via webhooks:
+
+```python
+from pipeiq.attestation import WebhookHandler
+
+async def handle_attestation_created(event):
+    print(f"New attestation created: {event['id']}")
+
+async def handle_attestation_updated(event):
+    print(f"Attestation updated: {event['id']}")
+    print(f"New version: {event['version']}")
+
+# Create webhook handler
+handler = WebhookHandler(
+    webhook_secret="your_webhook_secret",
+    handlers={
+        "attestation.created": handle_attestation_created,
+        "attestation.updated": handle_attestation_updated
+    }
+)
+
+# Handle webhook request
+await handler.handle_webhook(request_data, request_signature)
+```
+
+## Features
+
+### Attestation Versioning
+
+- Track changes to attestations over time
+- Maintain version history with metadata
+- Compare different versions
+- Roll back to previous versions if needed
+
+### Audit Logging
+
+- Comprehensive audit trail of all operations
+- Track who made changes and when
+- Filter logs by operation type, time range, and more
+- Export logs for compliance and auditing
+
+### Enhanced Error Handling
+
+- Specific error types for different scenarios
+- Detailed error messages and context
+- Validation errors for data integrity
+- Version conflict handling
+
+### Rate Limiting and Retries
+
+- Automatic rate limiting to prevent API abuse
+- Configurable retry logic for failed requests
+- Exponential backoff for retries
+- Customizable retry conditions
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## Features
 
@@ -178,66 +331,9 @@ The `SolanaWallet` class provides:
 - Balance checking
 - Network selection (mainnet-beta, testnet, devnet)
 
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
 ## Error Handling
 
 The SDK raises custom exceptions for different error scenarios:
 - `PipeIQError`: Base exception for all SDK errors
 - `ConnectionError`: Raised for network/API connection issues
 - `AuthenticationError`: Raised for authentication/authorization failures
-- `SolanaWalletError`: Raised for Solana wallet-specific errors
-
-Example:
-```python
-from pipeiq.client import PipeIQError, ConnectionError, AuthenticationError
-from pipeiq.solana import SolanaWalletError
-
-try:
-    # ... use the SDK ...
-except AuthenticationError:
-    print("Invalid API key or permissions.")
-except ConnectionError:
-    print("Network or server error.")
-except SolanaWalletError as e:
-    print(f"Wallet error: {e}")
-except PipeIQError as e:
-    print(f"General SDK error: {e}")
-
-## Logging
-
-The SDK uses Python's built-in logging module. You can configure logging as follows:
-
-```python
-from pipeiq.logger import setup_logger
-logger = setup_logger(level="DEBUG", log_file="pipeiq.log")
-```
-
-## Testing
-
-To run the test suite:
-
-```bash
-pip install -e ".[dev]"
-pytest tests/
-```
-
-Test coverage includes:
-- Client connection and error handling
-- Solana wallet operations and error handling
-- Retry logic and session management
-
-## Advanced Usage
-
-- **Retry Logic:**
-  - The client automatically retries failed requests (configurable via `max_retries` and `retry_backoff`).
-- **Custom Endpoints:**
-  - You can specify custom model endpoints in `ModelConfig`.
-- **Account Info:**
-  - Use `wallet.get_account_info()` to fetch detailed Solana account data.
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
