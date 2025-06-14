@@ -81,3 +81,163 @@ MIT License. See [LICENSE](LICENSE) for details.
 ---
 
 *PIPEIQ is building the decentralized substrate for AI. Join us.*
+
+# PipeIQ SDK
+
+A Solana-compatible SDK for connecting to different models and MCP servers. This SDK provides a simple interface for developers to interact with various AI models while leveraging Solana's blockchain capabilities for authentication and payments.
+
+## Installation
+
+```bash
+pip install pipeiq
+```
+
+## Quick Start
+
+```python
+import asyncio
+from pipeiq import PipeIQClient, ModelConfig, MCPConfig, SolanaWallet
+
+async def main():
+    # Initialize a Solana wallet (or use your existing one)
+    wallet = SolanaWallet()
+    
+    # Create the PipeIQ client
+    client = PipeIQClient(
+        api_key="your_api_key",
+        solana_wallet=wallet,
+        network="devnet"  # Use 'mainnet-beta' for production
+    )
+    
+    # Configure your model
+    model_config = ModelConfig(
+        model_id="gpt-4",
+        model_type="llm",
+        parameters={
+            "temperature": 0.7,
+            "max_tokens": 1000
+        }
+    )
+    
+    # Optionally configure an MCP server
+    mcp_config = MCPConfig(
+        server_url="https://your-mcp-server.com",
+        api_key="your_mcp_api_key"
+    )
+    
+    try:
+        # Connect to the model
+        result = await client.connect_to_model(model_config, mcp_config)
+        print(f"Connection successful: {result}")
+        
+        # Check wallet balance
+        balance = await wallet.get_balance()
+        print(f"Wallet balance: {balance} lamports")
+        
+    finally:
+        # Clean up
+        await client.close()
+        await wallet.close()
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+## Features
+
+- Solana wallet integration for secure authentication
+- Support for multiple model types (LLM, Image, Audio, etc.)
+- MCP (Model Control Protocol) server integration
+- Async/await support for better performance
+- Type hints and validation using Pydantic
+- Easy-to-use API for model connections
+
+## Configuration
+
+### Model Configuration
+
+The `ModelConfig` class allows you to specify:
+- Model ID and type
+- Custom parameters
+- Optional custom endpoint
+
+### MCP Configuration
+
+The `MCPConfig` class supports:
+- Server URL
+- API key
+- Timeout settings
+- Retry attempts
+- Custom headers
+
+### Solana Wallet
+
+The `SolanaWallet` class provides:
+- Keypair management
+- Message signing
+- Balance checking
+- Network selection (mainnet-beta, testnet, devnet)
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## Error Handling
+
+The SDK raises custom exceptions for different error scenarios:
+- `PipeIQError`: Base exception for all SDK errors
+- `ConnectionError`: Raised for network/API connection issues
+- `AuthenticationError`: Raised for authentication/authorization failures
+- `SolanaWalletError`: Raised for Solana wallet-specific errors
+
+Example:
+```python
+from pipeiq.client import PipeIQError, ConnectionError, AuthenticationError
+from pipeiq.solana import SolanaWalletError
+
+try:
+    # ... use the SDK ...
+except AuthenticationError:
+    print("Invalid API key or permissions.")
+except ConnectionError:
+    print("Network or server error.")
+except SolanaWalletError as e:
+    print(f"Wallet error: {e}")
+except PipeIQError as e:
+    print(f"General SDK error: {e}")
+
+## Logging
+
+The SDK uses Python's built-in logging module. You can configure logging as follows:
+
+```python
+from pipeiq.logger import setup_logger
+logger = setup_logger(level="DEBUG", log_file="pipeiq.log")
+```
+
+## Testing
+
+To run the test suite:
+
+```bash
+pip install -e ".[dev]"
+pytest tests/
+```
+
+Test coverage includes:
+- Client connection and error handling
+- Solana wallet operations and error handling
+- Retry logic and session management
+
+## Advanced Usage
+
+- **Retry Logic:**
+  - The client automatically retries failed requests (configurable via `max_retries` and `retry_backoff`).
+- **Custom Endpoints:**
+  - You can specify custom model endpoints in `ModelConfig`.
+- **Account Info:**
+  - Use `wallet.get_account_info()` to fetch detailed Solana account data.
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
