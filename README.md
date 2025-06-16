@@ -1556,7 +1556,7 @@ from pipeiq import PersonaService, PersonaError
 async with PersonaService("your_api_key") as persona_service:
     try:
         # Make API calls
-        inquiry = await persona_service.get_inquiry("inquiry_id")
+        inquiry = await persona_service.get_inquiry("test_id")
     except PersonaError as e:
         if "Rate limit exceeded" in str(e):
             # Handle rate limit errors
@@ -2152,3 +2152,200 @@ These guidelines and best practices help ensure:
 - Optimal performance
 - Secure operations
 - Easy maintenance and monitoring
+
+# HelloMoon Connector
+
+The HelloMoon connector provides a comprehensive interface to interact with the HelloMoon API, supporting both REST API and WebSocket connections.
+
+## Features
+
+- **REST API Support**: Access all HelloMoon API endpoints
+- **WebSocket Support**: Real-time updates via WebSocket connections
+- **Rate Limiting**: Automatic rate limit handling with token bucket algorithm
+- **Caching**: TTL-based caching for GET requests
+- **Error Handling**: Comprehensive error handling with retries
+- **Batch Operations**: Efficient batch requests for multiple items
+- **Type Safety**: Full type hints and Pydantic models
+
+## Installation
+
+```bash
+pip install pipeiq[hellomoon]
+```
+
+## Configuration
+
+The connector can be configured using the `HelloMoonConfig` class:
+
+```python
+from pipeiq.hellomoon import HelloMoonConfig
+
+config = HelloMoonConfig(
+    api_key="your_api_key",  # Or set HELLOMOON_API_KEY environment variable
+    rate_limit=200,          # Requests per minute
+    cache_ttl=600,           # Cache TTL in seconds
+    cache_size=2000,         # Maximum cache items
+    timeout=30               # Request timeout in seconds
+)
+```
+
+## Usage
+
+### Basic Usage
+
+```python
+from pipeiq.hellomoon import HelloMoonClient
+
+async def main():
+    async with HelloMoonClient() as client:
+        # Get account info
+        account = await client.get_account_info("address")
+        print(f"Account data: {account}")
+
+        # Get NFT metadata
+        nft = await client.get_nft_metadata("mint")
+        print(f"NFT data: {nft}")
+
+asyncio.run(main())
+```
+
+### Batch Operations
+
+```python
+async def batch_example():
+    async with HelloMoonClient() as client:
+        # Get multiple accounts
+        accounts = await client.batch_get_accounts([
+            "address1",
+            "address2"
+        ])
+
+        # Get multiple transactions
+        transactions = await client.batch_get_transactions([
+            "signature1",
+            "signature2"
+        ])
+```
+
+### WebSocket Subscriptions
+
+```python
+async def subscription_example():
+    async with HelloMoonClient() as client:
+        async def handle_transfer(data):
+            print(f"New transfer: {data}")
+
+        # Subscribe to token transfers
+        await client.subscribe_to_token_transfers(
+            "token_mint",
+            handle_transfer
+        )
+```
+
+### Market Data
+
+```python
+async def market_data_example():
+    async with HelloMoonClient() as client:
+        # Get current market data
+        market_data = await client.get_market_data("token_mint")
+        
+        # Get price history
+        price_history = await client.get_token_price_history(
+            "token_mint",
+            timeframe="1d",
+            limit=100
+        )
+```
+
+### Token Information
+
+```python
+async def token_example():
+    async with HelloMoonClient() as client:
+        # Get token holders
+        holders = await client.get_token_holders(
+            "token_mint",
+            limit=100,
+            offset=0
+        )
+        
+        # Get token transfers
+        transfers = await client.get_token_transfers(
+            "token_mint",
+            limit=100
+        )
+```
+
+## Error Handling
+
+The connector provides specific exception classes for different error scenarios:
+
+```python
+from pipeiq.hellomoon import HelloMoonError, RateLimitError, AuthenticationError
+
+async def error_handling_example():
+    try:
+        async with HelloMoonClient() as client:
+            await client.get_account_info("address")
+    except RateLimitError:
+        print("Rate limit exceeded")
+    except AuthenticationError:
+        print("Invalid API key")
+    except HelloMoonError as e:
+        print(f"API error: {e}")
+```
+
+## Best Practices
+
+1. **Use Context Manager**: Always use the `async with` context manager to ensure proper resource cleanup
+2. **Environment Variables**: Set your API key using the `HELLOMOON_API_KEY` environment variable
+3. **Rate Limiting**: Configure appropriate rate limits based on your API tier
+4. **Caching**: Adjust cache TTL and size based on your data freshness requirements
+5. **Error Handling**: Implement proper error handling for production use
+6. **WebSocket Management**: Handle WebSocket reconnection in production environments
+
+## API Reference
+
+### HelloMoonClient
+
+Main client class for interacting with the HelloMoon API.
+
+#### Methods
+
+- `get_account_info(address: str) -> Dict`
+- `get_transaction(signature: str) -> Dict`
+- `get_nft_metadata(mint: str) -> Dict`
+- `get_nft_collection(collection_address: str) -> Dict`
+- `get_market_data(mint: str) -> Dict`
+- `get_token_price_history(mint: str, timeframe: str = "1d", limit: int = 100) -> List[Dict]`
+- `get_token_holders(mint: str, limit: int = 100, offset: int = 0) -> List[Dict]`
+- `get_token_transfers(mint: str, limit: int = 100, before: Optional[str] = None) -> List[Dict]`
+- `get_program_instructions(program_id: str, limit: int = 100, before: Optional[str] = None) -> List[Dict]`
+- `get_account_changes(address: str, limit: int = 100, before: Optional[str] = None) -> List[Dict]`
+- `batch_get_accounts(addresses: List[str]) -> List[Dict]`
+- `batch_get_transactions(signatures: List[str]) -> List[Dict]`
+- `subscribe_to_token_transfers(mint: str, callback: Callable[[Dict], None])`
+
+### HelloMoonConfig
+
+Configuration class for the HelloMoon client.
+
+#### Attributes
+
+- `api_key: str`
+- `base_url: str`
+- `ws_url: str`
+- `timeout: int`
+- `max_retries: int`
+- `rate_limit: int`
+- `cache_ttl: int`
+- `cache_size: int`
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.

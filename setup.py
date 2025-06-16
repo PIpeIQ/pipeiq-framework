@@ -12,6 +12,10 @@ setup(
         "base58>=2.1.1",
         "construct>=2.10.68",
         "pydantic>=2.0.0",
+        "websockets>=11.0.3",  # For WebSocket connections
+        "aiohttp>=3.8.0",      # For async HTTP requests
+        "backoff>=2.2.1",
+        "cachetools>=5.3.0",
     ],
     extras_require={
         "dev": [
