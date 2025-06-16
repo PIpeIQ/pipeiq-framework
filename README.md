@@ -40,6 +40,405 @@ With native support for models, MCP servers, decentralized compute providers, an
 - Message schema for goal-driven task delegation
 - Modular routing system between agents & services
 
+### Persona Integration
+
+The Persona integration provides a comprehensive interface for identity verification, including government ID verification, selfie checks, database lookups, and more.
+
+#### Setup
+
+```python
+from pipeiq import PersonaService, InquiryConfig, VerificationType, ReportType
+
+# Initialize the Persona service
+persona = PersonaService(
+    api_key="your_api_key",
+    environment="sandbox"  # or "production"
+)
+
+# Use async context manager for automatic session management
+async with persona as service:
+    # Create an inquiry
+    config = InquiryConfig(
+        template_id="your_template_id",
+        reference_id="user_123",
+        metadata={"user_id": "123"},
+        expires_at=datetime.now() + timedelta(hours=1),
+        redirect_url="https://your-app.com/redirect",
+        webhook_url="https://your-app.com/webhook"
+    )
+    inquiry = await service.create_inquiry(config)
+```
+
+#### Identity Verification
+
+```python
+# Create a government ID verification
+verification_config = VerificationConfig(
+    type=VerificationType.GOVERNMENT_ID,
+    country="US",
+    document_type="drivers_license",
+    metadata={"document_number": "123456"}
+)
+verification = await service.create_verification(inquiry_id, verification_config)
+
+# Create a selfie verification
+selfie_config = VerificationConfig(
+    type=VerificationType.SELFIE,
+    metadata={"liveness_check": True}
+)
+selfie = await service.create_verification(inquiry_id, selfie_config)
+```
+
+#### Reports and Checks
+
+```python
+# Create a watchlist report
+report_config = ReportConfig(
+    type=ReportType.WATCHLIST,
+    metadata={"search_type": "global"}
+)
+report = await service.create_report(inquiry_id, report_config)
+
+# Get report results
+report_details = await service.get_report(inquiry_id, report_id)
+```
+
+#### Inquiry Management
+
+```python
+# List all inquiries
+inquiries = await service.list_inquiries(
+    page_size=10,
+    page_number=1,
+    status=InquiryStatus.COMPLETED
+)
+
+# Approve an inquiry
+await service.approve_inquiry(inquiry_id)
+
+# Decline an inquiry
+await service.decline_inquiry(inquiry_id)
+
+# Mark for manual review
+await service.mark_for_review(inquiry_id)
+```
+
+#### Error Handling
+
+```python
+from pipeiq import PersonaError, ConnectionError, VerificationError, ReportError
+
+try:
+    inquiry = await service.create_inquiry(config)
+except ConnectionError as e:
+    print(f"Connection error: {e}")
+except VerificationError as e:
+    print(f"Verification error: {e}")
+except ReportError as e:
+    print(f"Report error: {e}")
+except PersonaError as e:
+    print(f"General error: {e}")
+```
+
+### Document Verification
+
+The Persona integration supports comprehensive document verification with various document types:
+
+```python
+from pipeiq import PersonaService, DocumentConfig, DocumentType
+
+async with PersonaService(api_key="your_api_key") as persona:
+    # Create document verification
+    config = DocumentConfig(
+        type=DocumentType.PASSPORT,
+        country="US",
+        metadata={"key": "value"},
+        front_image="base64_front_image",
+        back_image="base64_back_image"
+    )
+    
+    result = await persona.create_document_verification("inq_123", config)
+    print(f"Document verification created: {result['data']['id']}")
+```
+
+### Case Management
+
+Manage verification cases with comprehensive case management features:
+
+```python
+from pipeiq import PersonaService, CaseConfig, CaseStatus
+
+async with PersonaService(api_key="your_api_key") as persona:
+    # Create a new case
+    config = CaseConfig(
+        reference_id="ref_123",
+        status=CaseStatus.OPEN,
+        metadata={"key": "value"},
+        assignee="user_123",
+        tags=["tag1", "tag2"]
+    )
+    
+    case = await persona.create_case(config)
+    print(f"Case created: {case['data']['id']}")
+    
+    # Update case status
+    updated_case = await persona.update_case(
+        case["data"]["id"],
+        status=CaseStatus.REVIEW,
+        assignee="user_456"
+    )
+    
+    # List cases with filters
+    cases = await persona.list_cases(
+        page_size=10,
+        page_number=1,
+        status=CaseStatus.OPEN,
+        assignee="user_123",
+        tags=["tag1"]
+    )
+    
+    # Manage case tags
+    await persona.add_case_tag(case["data"]["id"], "new_tag")
+    await persona.remove_case_tag(case["data"]["id"], "new_tag")
+```
+
+### Verification Methods
+
+Configure and manage verification methods for inquiries:
+
+```python
+from pipeiq import (
+    PersonaService,
+    VerificationMethodConfig,
+    VerificationMethod
+)
+
+async with PersonaService(api_key="your_api_key") as persona:
+    # Configure verification methods
+    methods = [
+        VerificationMethodConfig(
+            method=VerificationMethod.DOCUMENT,
+            enabled=True,
+            options={"require_back": True}
+        ),
+        VerificationMethodConfig(
+            method=VerificationMethod.SELFIE,
+            enabled=True,
+            options={"require_liveness": True}
+        )
+    ]
+    
+    result = await persona.configure_verification_methods("inq_123", methods)
+    
+    # Get configured methods
+    methods = await persona.get_verification_methods("inq_123")
+```
+
+### Error Handling
+
+The Persona integration includes comprehensive error handling:
+
+```python
+from pipeiq import (
+    PersonaService,
+    PersonaError,
+    ConnectionError,
+    VerificationError,
+    DocumentConfig,
+    DocumentType
+)
+
+async with PersonaService(api_key="your_api_key") as persona:
+    try:
+        # Create document verification
+        config = DocumentConfig(
+            type=DocumentType.PASSPORT,
+            country="US"
+        )
+        result = await persona.create_document_verification("inq_123", config)
+    except ConnectionError as e:
+        print(f"Connection error: {e}")
+    except VerificationError as e:
+        print(f"Verification error: {e}")
+    except PersonaError as e:
+        print(f"Persona error: {e}")
+```
+
+### Webhook Integration
+
+The Persona integration supports webhook handling for real-time event notifications:
+
+```python
+from pipeiq import (
+    PersonaService,
+    WebhookConfig,
+    WebhookEventType
+)
+
+async with PersonaService(api_key="your_api_key") as persona:
+    # Register a webhook endpoint
+    config = WebhookConfig(
+        url="https://your-domain.com/webhook",
+        events=[
+            WebhookEventType.INQUIRY_CREATED,
+            WebhookEventType.INQUIRY_COMPLETED,
+            WebhookEventType.DOCUMENT_VERIFIED
+        ],
+        secret="your_webhook_secret",
+        metadata={"environment": "production"}
+    )
+    
+    webhook = await persona.register_webhook(config)
+    print(f"Webhook registered: {webhook['data']['id']}")
+    
+    # List registered webhooks
+    webhooks = await persona.list_webhooks()
+    
+    # Process incoming webhook events
+    async def handle_webhook(request):
+        payload = await request.json()
+        signature = request.headers.get("X-Persona-Signature")
+        
+        try:
+            result = await persona.process_webhook_event(
+                payload,
+                signature,
+                "your_webhook_secret"
+            )
+            print(f"Processed {result['event_type']} event")
+        except PersonaError as e:
+            print(f"Error processing webhook: {e}")
+```
+
+### Batch Operations
+
+Perform multiple operations in a single request using batch operations:
+
+```python
+from pipeiq import (
+    PersonaService,
+    InquiryConfig,
+    DocumentConfig,
+    DocumentType,
+    ReportConfig,
+    ReportType
+)
+
+async with PersonaService(api_key="your_api_key") as persona:
+    # Create multiple inquiries in batch
+    inquiries = [
+        InquiryConfig(reference_id="ref_1", template_id="template_1"),
+        InquiryConfig(reference_id="ref_2", template_id="template_2")
+    ]
+    
+    batch_result = await persona.create_batch_inquiries(inquiries)
+    print(f"Batch operation started: {batch_result['data']['id']}")
+    
+    # Check batch operation status
+    status = await persona.get_batch_operation_status(batch_result["data"]["id"])
+    print(f"Batch status: {status['data']['attributes']['status']}")
+    
+    # Verify multiple documents in batch
+    documents = [
+        DocumentConfig(
+            type=DocumentType.PASSPORT,
+            country="US",
+            front_image="base64_front_1"
+        ),
+        DocumentConfig(
+            type=DocumentType.DRIVERS_LICENSE,
+            country="US",
+            front_image="base64_front_2",
+            back_image="base64_back_2"
+        )
+    ]
+    
+    batch_result = await persona.verify_batch_documents(documents)
+    
+    # Generate multiple reports in batch
+    reports = [
+        ReportConfig(type=ReportType.WATCHLIST, inquiry_id="inq_1"),
+        ReportConfig(type=ReportType.POLITICALLY_EXPOSED, inquiry_id="inq_2")
+    ]
+    
+    batch_result = await persona.generate_batch_reports(reports)
+```
+
+### Advanced Verification Features
+
+Configure and manage verification methods for enhanced security:
+
+```python
+from pipeiq import (
+    PersonaService,
+    VerificationMethodConfig,
+    VerificationMethod
+)
+
+async with PersonaService(api_key="your_api_key") as persona:
+    # Configure verification methods
+    methods = [
+        VerificationMethodConfig(
+            method=VerificationMethod.DOCUMENT,
+            enabled=True,
+            options={"require_back": True}
+        ),
+        VerificationMethodConfig(
+            method=VerificationMethod.SELFIE,
+            enabled=True,
+            options={"require_liveness": True}
+        ),
+        VerificationMethodConfig(
+            method=VerificationMethod.FACE_MATCH,
+            enabled=True,
+            options={"threshold": 0.8}
+        )
+    ]
+    
+    result = await persona.configure_verification_methods("inq_123", methods)
+    
+    # Get configured methods
+    methods = await persona.get_verification_methods("inq_123")
+    print(f"Enabled methods: {[m['method'] for m in methods['data']['attributes']['methods']]}")
+```
+
+### Error Handling
+
+The Persona integration includes comprehensive error handling for all operations:
+
+```python
+from pipeiq import (
+    PersonaService,
+    PersonaError,
+    ConnectionError,
+    VerificationError,
+    WebhookConfig,
+    WebhookEventType
+)
+
+async with PersonaService(api_key="your_api_key") as persona:
+    try:
+        # Register webhook
+        config = WebhookConfig(
+            url="https://example.com/webhook",
+            events=[WebhookEventType.INQUIRY_CREATED]
+        )
+        await persona.register_webhook(config)
+        
+        # Process webhook event
+        await persona.process_webhook_event(
+            payload,
+            signature,
+            "your_webhook_secret"
+        )
+    except ConnectionError as e:
+        print(f"Connection error: {e}")
+    except VerificationError as e:
+        print(f"Verification error: {e}")
+    except PersonaError as e:
+        print(f"Persona error: {e}")
+```
+
 ---
 
 ## Architecture
@@ -1032,3 +1431,724 @@ new_permissions = {
 result = await wallet.update_wallet_permissions(new_permissions)
 print(f"Permissions updated: {result}")
 ```
+
+## Advanced Features
+
+### Rate Limiting
+
+The Persona service includes built-in rate limiting to prevent API throttling. You can configure the rate limits when initializing the service:
+
+```python
+from pipeiq import PersonaService, RateLimitConfig
+
+# Configure rate limits
+rate_limit_config = RateLimitConfig(
+    requests_per_second=10,  # Maximum requests per second
+    burst_size=20,          # Maximum burst size
+    window_size=1           # Time window in seconds
+)
+
+# Initialize service with rate limits
+async with PersonaService(
+    api_key="your_api_key",
+    rate_limit_config=rate_limit_config
+) as persona_service:
+    # Make API calls - rate limiting is handled automatically
+    inquiry = await persona_service.get_inquiry("inquiry_id")
+```
+
+You can also update rate limits at runtime:
+
+```python
+# Update rate limits
+new_config = RateLimitConfig(requests_per_second=20, burst_size=40)
+await persona_service.update_rate_limit(new_config)
+```
+
+### Retry Mechanism
+
+The service includes automatic retry logic for failed requests. Configure retry behavior when initializing the service:
+
+```python
+from pipeiq import PersonaService, RetryConfig, RetryStrategy
+
+# Configure retry behavior
+retry_config = RetryConfig(
+    max_retries=3,                    # Maximum number of retry attempts
+    initial_delay=1.0,                # Initial delay between retries (seconds)
+    max_delay=30.0,                   # Maximum delay between retries (seconds)
+    strategy=RetryStrategy.EXPONENTIAL_BACKOFF,  # Retry strategy
+    retry_on_status_codes=[429, 500, 502, 503, 504]  # Status codes to retry on
+)
+
+# Initialize service with retry config
+async with PersonaService(
+    api_key="your_api_key",
+    retry_config=retry_config
+) as persona_service:
+    # Make API calls - retries are handled automatically
+    inquiry = await persona_service.get_inquiry("inquiry_id")
+```
+
+Available retry strategies:
+- `EXPONENTIAL_BACKOFF`: Delay increases exponentially between retries
+- `LINEAR_BACKOFF`: Delay increases linearly between retries
+- `CONSTANT`: Fixed delay between retries
+
+Update retry configuration at runtime:
+
+```python
+# Update retry config
+new_config = RetryConfig(
+    max_retries=5,
+    initial_delay=0.5,
+    strategy=RetryStrategy.LINEAR_BACKOFF
+)
+await persona_service.update_retry_config(new_config)
+```
+
+### Caching
+
+The service includes an in-memory cache to improve performance and reduce API calls. Configure caching when initializing the service:
+
+```python
+from pipeiq import PersonaService, CacheConfig
+
+# Configure caching
+cache_config = CacheConfig(
+    ttl=300,           # Time-to-live for cached items (seconds)
+    max_size=1000,     # Maximum number of cached items
+    enabled=True       # Enable/disable caching
+)
+
+# Initialize service with cache config
+async with PersonaService(
+    api_key="your_api_key",
+    cache_config=cache_config
+) as persona_service:
+    # First call - hits the API
+    inquiry1 = await persona_service.get_inquiry("inquiry_id")
+    
+    # Second call - uses cache
+    inquiry2 = await persona_service.get_inquiry("inquiry_id")
+```
+
+Cache management:
+
+```python
+# Clear the cache
+await persona_service.clear_cache()
+
+# Update cache configuration
+new_config = CacheConfig(ttl=600, max_size=100, enabled=False)
+await persona_service.update_cache_config(new_config)
+```
+
+Note: Caching is only applied to GET requests by default. POST, PUT, and DELETE requests are not cached.
+
+### Error Handling
+
+The service includes comprehensive error handling for rate limits, retries, and caching:
+
+```python
+from pipeiq import PersonaService, PersonaError
+
+async with PersonaService("your_api_key") as persona_service:
+    try:
+        # Make API calls
+        inquiry = await persona_service.get_inquiry("inquiry_id")
+    except PersonaError as e:
+        if "Rate limit exceeded" in str(e):
+            # Handle rate limit errors
+            print("Rate limit exceeded, please try again later")
+        else:
+            # Handle other API errors
+            print(f"API error: {e}")
+    except Exception as e:
+        # Handle other errors
+        print(f"Unexpected error: {e}")
+```
+
+### Best Practices
+
+1. **Rate Limiting**:
+   - Set appropriate rate limits based on your API tier
+   - Use burst size to handle traffic spikes
+   - Monitor rate limit errors and adjust accordingly
+
+2. **Retry Strategy**:
+   - Use exponential backoff for most cases
+   - Adjust retry counts and delays based on API reliability
+   - Consider API costs when setting retry limits
+
+3. **Caching**:
+   - Set appropriate TTL based on data freshness requirements
+   - Monitor cache size and adjust based on memory constraints
+   - Clear cache when data is updated
+
+4. **Error Handling**:
+   - Always implement proper error handling
+   - Log errors for monitoring and debugging
+   - Implement fallback strategies for critical operations
+
+### Advanced Usage Examples
+
+#### Rate Limiting Examples
+
+1. **Handling High Traffic**:
+```python
+from pipeiq import PersonaService, RateLimitConfig
+
+# Configure for high traffic
+rate_limit_config = RateLimitConfig(
+    requests_per_second=50,  # High throughput
+    burst_size=100,         # Allow bursts
+    window_size=1           # 1-second window
+)
+
+async with PersonaService("your_api_key", rate_limit_config=rate_limit_config) as persona_service:
+    # Process multiple inquiries concurrently
+    inquiries = await asyncio.gather(*[
+        persona_service.get_inquiry(f"inquiry_{i}")
+        for i in range(100)
+    ])
+```
+
+2. **Adaptive Rate Limiting**:
+```python
+async with PersonaService("your_api_key") as persona_service:
+    # Start with conservative limits
+    await persona_service.update_rate_limit(RateLimitConfig(
+        requests_per_second=10,
+        burst_size=20
+    ))
+    
+    try:
+        # Process requests
+        await persona_service.get_inquiry("test_id")
+    except PersonaError as e:
+        if "Rate limit exceeded" in str(e):
+            # Reduce rate limit on error
+            await persona_service.update_rate_limit(RateLimitConfig(
+                requests_per_second=5,
+                burst_size=10
+            ))
+```
+
+#### Retry Strategy Examples
+
+1. **Custom Retry Configuration**:
+```python
+from pipeiq import PersonaService, RetryConfig, RetryStrategy
+
+# Configure for sensitive operations
+retry_config = RetryConfig(
+    max_retries=5,                    # More retries
+    initial_delay=0.5,                # Start with 500ms
+    max_delay=60.0,                   # Max 60s delay
+    strategy=RetryStrategy.EXPONENTIAL_BACKOFF,
+    retry_on_status_codes=[429, 500, 502, 503, 504, 408]  # Additional status codes
+)
+
+async with PersonaService("your_api_key", retry_config=retry_config) as persona_service:
+    # Critical operation with enhanced retry
+    result = await persona_service.create_inquiry(InquiryConfig(
+        reference_id="critical_operation",
+        template_id="sensitive_template"
+    ))
+```
+
+2. **Different Strategies for Different Operations**:
+```python
+async with PersonaService("your_api_key") as persona_service:
+    # Use exponential backoff for critical operations
+    await persona_service.update_retry_config(RetryConfig(
+        strategy=RetryStrategy.EXPONENTIAL_BACKOFF
+    ))
+    await persona_service.create_inquiry(...)
+    
+    # Use linear backoff for background operations
+    await persona_service.update_retry_config(RetryConfig(
+        strategy=RetryStrategy.LINEAR_BACKOFF
+    ))
+    await persona_service.list_inquiries()
+```
+
+#### Caching Examples
+
+1. **Optimizing Frequently Accessed Data**:
+```python
+from pipeiq import PersonaService, CacheConfig
+
+# Configure cache for frequently accessed data
+cache_config = CacheConfig(
+    ttl=3600,           # 1 hour cache
+    max_size=1000,      # Store up to 1000 items
+    enabled=True
+)
+
+async with PersonaService("your_api_key", cache_config=cache_config) as persona_service:
+    # First call - hits the API
+    inquiry = await persona_service.get_inquiry("frequent_id")
+    
+    # Subsequent calls - use cache
+    for _ in range(100):
+        cached_inquiry = await persona_service.get_inquiry("frequent_id")
+```
+
+2. **Selective Caching**:
+```python
+async with PersonaService("your_api_key") as persona_service:
+    # Enable caching for GET operations
+    await persona_service.update_cache_config(CacheConfig(
+        ttl=300,
+        enabled=True
+    ))
+    
+    # Cache GET requests
+    inquiry = await persona_service.get_inquiry("test_id")
+    
+    # Disable caching for POST operations
+    await persona_service.update_cache_config(CacheConfig(
+        enabled=False
+    ))
+    
+    # No caching for POST requests
+    result = await persona_service.create_inquiry(...)
+```
+
+3. **Cache Management**:
+```python
+async with PersonaService("your_api_key") as persona_service:
+    # Populate cache
+    await persona_service.get_inquiry("id1")
+    await persona_service.get_inquiry("id2")
+    
+    # Clear cache before critical operation
+    await persona_service.clear_cache()
+    
+    # Update cache configuration
+    await persona_service.update_cache_config(CacheConfig(
+        ttl=600,      # 10 minutes
+        max_size=100  # Smaller cache
+    ))
+```
+
+#### Error Handling Examples
+
+1. **Comprehensive Error Handling**:
+```python
+from pipeiq import PersonaService, PersonaError
+
+async with PersonaService("your_api_key") as persona_service:
+    try:
+        # Make API calls
+        inquiry = await persona_service.get_inquiry("test_id")
+    except PersonaError as e:
+        if "Rate limit exceeded" in str(e):
+            # Handle rate limit errors
+            print("Rate limit exceeded, implementing backoff...")
+            await asyncio.sleep(5)
+        elif "API error" in str(e):
+            # Handle API errors
+            print(f"API error: {e}")
+        else:
+            # Handle other Persona errors
+            print(f"Persona error: {e}")
+    except Exception as e:
+        # Handle unexpected errors
+        print(f"Unexpected error: {e}")
+```
+
+2. **Retry with Error Handling**:
+```python
+async def process_with_retry(persona_service, inquiry_id, max_attempts=3):
+    for attempt in range(max_attempts):
+        try:
+            return await persona_service.get_inquiry(inquiry_id)
+        except PersonaError as e:
+            if attempt == max_attempts - 1:
+                raise
+            print(f"Attempt {attempt + 1} failed: {e}")
+            await asyncio.sleep(2 ** attempt)  # Exponential backoff
+```
+
+3. **Cache Error Recovery**:
+```python
+async def get_inquiry_with_cache_fallback(persona_service, inquiry_id):
+    try:
+        # Try with cache
+        return await persona_service.get_inquiry(inquiry_id)
+    except PersonaError as e:
+        # Clear cache on error
+        await persona_service.clear_cache()
+        # Retry without cache
+        return await persona_service.get_inquiry(inquiry_id)
+```
+
+### Best Practices
+
+1. **Rate Limiting**:
+   - Monitor API usage patterns
+   - Adjust rate limits based on traffic
+   - Implement graceful degradation
+   - Use burst sizes for traffic spikes
+
+2. **Retry Strategy**:
+   - Use exponential backoff for most cases
+   - Implement circuit breakers for failing endpoints
+   - Log retry attempts for monitoring
+   - Consider API costs in retry configuration
+
+3. **Caching**:
+   - Set appropriate TTL based on data freshness
+   - Monitor cache hit rates
+   - Implement cache invalidation strategies
+   - Use cache size limits to prevent memory issues
+
+4. **Error Handling**:
+   - Implement comprehensive error handling
+   - Log errors for monitoring
+   - Use appropriate retry strategies
+   - Implement fallback mechanisms
+
+5. **Performance Optimization**:
+   - Use concurrent requests when appropriate
+   - Implement proper caching strategies
+   - Monitor and adjust rate limits
+   - Use appropriate retry configurations
+```
+
+## Best Practices and Guidelines
+
+### General Guidelines
+
+1. **API Key Management**:
+   ```python
+   # Store API keys securely
+   import os
+   from dotenv import load_dotenv
+   
+   load_dotenv()
+   API_KEY = os.getenv("PERSONA_API_KEY")
+   
+   # Use environment-specific keys
+   async with PersonaService(
+       api_key=API_KEY,
+       environment="sandbox" if os.getenv("ENV") == "development" else "production"
+   ) as persona_service:
+       # Your code here
+   ```
+
+2. **Resource Management**:
+   ```python
+   # Always use async context manager
+   async with PersonaService("your_api_key") as persona_service:
+       # Your code here
+   # Resources are automatically cleaned up
+   ```
+
+3. **Error Handling**:
+   ```python
+   # Implement comprehensive error handling
+   try:
+       result = await persona_service.get_inquiry("test_id")
+   except PersonaError as e:
+       # Log error with context
+       logger.error(f"Persona API error: {e}", extra={
+           "inquiry_id": "test_id",
+           "error_type": type(e).__name__
+       })
+       # Implement appropriate fallback
+   ```
+
+### Rate Limiting Guidelines
+
+1. **Traffic Management**:
+   ```python
+   # Implement adaptive rate limiting
+   class AdaptiveRateLimiter:
+       def __init__(self, persona_service):
+           self.persona_service = persona_service
+           self.base_config = RateLimitConfig(
+               requests_per_second=10,
+               burst_size=20
+           )
+           
+       async def adjust_limits(self, success_rate):
+           if success_rate < 0.9:  # 90% success threshold
+               # Reduce limits on high error rate
+               await self.persona_service.update_rate_limit(RateLimitConfig(
+                   requests_per_second=self.base_config.requests_per_second * 0.5,
+                   burst_size=self.base_config.burst_size * 0.5
+               ))
+           else:
+               # Gradually increase limits on good performance
+               await self.persona_service.update_rate_limit(self.base_config)
+   ```
+
+2. **Burst Handling**:
+   ```python
+   # Implement burst protection
+   async def process_with_burst_protection(persona_service, items):
+       # Calculate optimal batch size
+       batch_size = min(50, len(items))
+       
+       # Process in batches
+       for i in range(0, len(items), batch_size):
+           batch = items[i:i + batch_size]
+           await asyncio.gather(*[
+               persona_service.get_inquiry(item_id)
+               for item_id in batch
+           ])
+           # Add delay between batches
+           await asyncio.sleep(0.1)
+   ```
+
+### Retry Strategy Guidelines
+
+1. **Operation-Specific Retry**:
+   ```python
+   # Implement operation-specific retry strategies
+   class RetryStrategyManager:
+       def __init__(self, persona_service):
+           self.persona_service = persona_service
+           
+       async def configure_for_operation(self, operation_type):
+           if operation_type == "critical":
+               await self.persona_service.update_retry_config(RetryConfig(
+                   max_retries=5,
+                   initial_delay=1.0,
+                   strategy=RetryStrategy.EXPONENTIAL_BACKOFF
+               ))
+           elif operation_type == "background":
+               await self.persona_service.update_retry_config(RetryConfig(
+                   max_retries=2,
+                   initial_delay=0.5,
+                   strategy=RetryStrategy.LINEAR_BACKOFF
+               ))
+   ```
+
+2. **Circuit Breaker Pattern**:
+   ```python
+   class CircuitBreaker:
+       def __init__(self, threshold=5, reset_timeout=60):
+           self.threshold = threshold
+           self.reset_timeout = reset_timeout
+           self.failures = 0
+           self.last_failure_time = None
+           
+       async def execute(self, persona_service, operation):
+           if self.is_open():
+               raise Exception("Circuit breaker is open")
+               
+           try:
+               result = await operation()
+               self.reset()
+               return result
+           except PersonaError as e:
+               self.record_failure()
+               raise
+               
+       def is_open(self):
+           if self.failures >= self.threshold:
+               if time.time() - self.last_failure_time > self.reset_timeout:
+                   self.reset()
+                   return False
+               return True
+           return False
+   ```
+
+### Caching Guidelines
+
+1. **Cache Invalidation**:
+   ```python
+   class CacheManager:
+       def __init__(self, persona_service):
+           self.persona_service = persona_service
+           
+       async def get_with_cache(self, inquiry_id):
+           try:
+               return await self.persona_service.get_inquiry(inquiry_id)
+           except PersonaError:
+               # Clear cache on error
+               await self.persona_service.clear_cache()
+               raise
+               
+       async def invalidate_on_update(self, inquiry_id):
+           # Clear cache before update
+           await self.persona_service.clear_cache()
+           # Perform update
+           result = await self.persona_service.update_inquiry(inquiry_id)
+           return result
+   ```
+
+2. **Cache Warming**:
+   ```python
+   class CacheWarmer:
+       def __init__(self, persona_service):
+           self.persona_service = persona_service
+           
+       async def warm_cache(self, inquiry_ids):
+           # Warm cache with frequently accessed data
+           await asyncio.gather(*[
+               self.persona_service.get_inquiry(inquiry_id)
+               for inquiry_id in inquiry_ids
+           ])
+   ```
+
+### Performance Optimization Guidelines
+
+1. **Concurrent Operations**:
+   ```python
+   class BatchProcessor:
+       def __init__(self, persona_service):
+           self.persona_service = persona_service
+           
+       async def process_batch(self, items, batch_size=50):
+           results = []
+           for i in range(0, len(items), batch_size):
+               batch = items[i:i + batch_size]
+               batch_results = await asyncio.gather(*[
+                   self.persona_service.get_inquiry(item_id)
+                   for item_id in batch
+               ])
+               results.extend(batch_results)
+           return results
+   ```
+
+2. **Resource Pooling**:
+   ```python
+   class PersonaServicePool:
+       def __init__(self, api_key, pool_size=5):
+           self.pool = asyncio.Queue(maxsize=pool_size)
+           for _ in range(pool_size):
+               self.pool.put_nowait(PersonaService(api_key))
+               
+       async def get_service(self):
+           return await self.pool.get()
+           
+       async def release_service(self, service):
+           await self.pool.put(service)
+   ```
+
+### Monitoring and Logging Guidelines
+
+1. **Performance Monitoring**:
+   ```python
+   class PerformanceMonitor:
+       def __init__(self):
+           self.metrics = {
+               "request_count": 0,
+               "error_count": 0,
+               "cache_hits": 0,
+               "cache_misses": 0
+           }
+           
+       async def track_operation(self, operation):
+           start_time = time.time()
+           try:
+               result = await operation()
+               self.metrics["request_count"] += 1
+               return result
+           except Exception as e:
+               self.metrics["error_count"] += 1
+               raise
+           finally:
+               duration = time.time() - start_time
+               # Log metrics
+               logger.info("Operation metrics", extra={
+                   "duration": duration,
+                   "metrics": self.metrics
+               })
+   ```
+
+2. **Error Tracking**:
+   ```python
+   class ErrorTracker:
+       def __init__(self):
+           self.errors = defaultdict(int)
+           
+       def track_error(self, error):
+           error_type = type(error).__name__
+           self.errors[error_type] += 1
+           
+           # Alert on high error rates
+           if self.errors[error_type] > 10:
+               logger.error(f"High error rate for {error_type}")
+   ```
+
+### Security Guidelines
+
+1. **API Key Rotation**:
+   ```python
+   class APIKeyManager:
+       def __init__(self):
+           self.keys = []
+           self.current_key_index = 0
+           
+       def add_key(self, key):
+           self.keys.append(key)
+           
+       def get_current_key(self):
+           return self.keys[self.current_key_index]
+           
+       def rotate_key(self):
+           self.current_key_index = (self.current_key_index + 1) % len(self.keys)
+   ```
+
+2. **Request Validation**:
+   ```python
+   class RequestValidator:
+       @staticmethod
+       def validate_inquiry_config(config):
+           if not config.reference_id:
+               raise ValueError("Reference ID is required")
+           if not config.template_id:
+               raise ValueError("Template ID is required")
+           return config
+   ```
+
+### Deployment Guidelines
+
+1. **Environment Configuration**:
+   ```python
+   class EnvironmentConfig:
+       def __init__(self):
+           self.config = {
+               "development": {
+                   "rate_limit": RateLimitConfig(requests_per_second=5),
+                   "cache": CacheConfig(ttl=60)
+               },
+               "production": {
+                   "rate_limit": RateLimitConfig(requests_per_second=50),
+                   "cache": CacheConfig(ttl=300)
+               }
+           }
+           
+       def get_config(self, environment):
+           return self.config.get(environment, self.config["development"])
+   ```
+
+2. **Health Checks**:
+   ```python
+   class HealthChecker:
+       def __init__(self, persona_service):
+           self.persona_service = persona_service
+           
+       async def check_health(self):
+           try:
+               # Perform lightweight API call
+               await self.persona_service.get_inquiry("health_check")
+               return True
+           except Exception:
+               return False
+   ```
+
+These guidelines and best practices help ensure:
+- Reliable and efficient API usage
+- Proper resource management
+- Effective error handling
+- Optimal performance
+- Secure operations
+- Easy maintenance and monitoring
