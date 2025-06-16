@@ -718,3 +718,317 @@ availability = await service.get_network_availability(
     region="us-west-1"
 )
 ```
+
+## Phantom Wallet Integration
+
+PipeIQ provides seamless integration with the Phantom wallet for Solana blockchain interactions. The integration supports various operations including connecting to the wallet, managing transactions, and handling token accounts.
+
+### Basic Usage
+
+```python
+from pipeiq import PhantomWallet, NetworkType, WalletConfig
+
+# Initialize wallet with default config
+wallet = PhantomWallet()
+
+# Or with custom config
+config = WalletConfig(
+    network=NetworkType.TESTNET,
+    auto_approve=True,
+    timeout=60000
+)
+wallet = PhantomWallet(config=config)
+
+# Connect to wallet
+connection = await wallet.connect()
+print(f"Connected to wallet: {connection['publicKey']}")
+
+# Get balance
+balance = await wallet.get_balance(connection['publicKey'])
+print(f"Balance: {balance} SOL")
+
+# Disconnect
+await wallet.disconnect()
+```
+
+### Transaction Management
+
+```python
+from pipeiq import TransactionConfig, TransactionStatus
+
+# Send a transaction
+transaction = {
+    "from": "sender_public_key",
+    "to": "recipient_public_key",
+    "amount": 1.0
+}
+
+config = TransactionConfig(
+    fee_payer="sender_public_key",
+    recent_blockhash="test_blockhash"
+)
+
+result = await wallet.send_transaction(transaction, config)
+print(f"Transaction sent: {result['signature']}")
+
+# Check transaction status
+status = await wallet.get_transaction_status(result['signature'])
+print(f"Transaction status: {status['status']}")
+```
+
+### Token Management
+
+```python
+# Get token accounts
+accounts = await wallet.get_token_accounts("public_key")
+for account in accounts:
+    print(f"Token: {account['mint']}")
+    print(f"Amount: {account['amount']}")
+    print(f"Decimals: {account['decimals']}")
+```
+
+### Message Signing
+
+```python
+# Sign a message
+signature = await wallet.sign_message("Hello, World!")
+print(f"Message signed: {signature['signature']}")
+
+# Verify signature
+is_valid = await wallet.verify_signature(
+    "Hello, World!",
+    signature['signature'],
+    signature['publicKey']
+)
+print(f"Signature valid: {is_valid}")
+```
+
+### Network Management
+
+```python
+# Get current network
+network = await wallet.get_network()
+print(f"Current network: {network}")
+
+# Switch network
+await wallet.switch_network(NetworkType.TESTNET)
+print(f"Switched to: {await wallet.get_network()}")
+```
+
+### Error Handling
+
+```python
+from pipeiq import ConnectionError, TransactionError
+
+try:
+    # Attempt to get balance without connecting
+    balance = await wallet.get_balance("public_key")
+except ConnectionError as e:
+    print(f"Connection error: {e}")
+
+try:
+    # Attempt invalid transaction
+    await wallet.send_transaction({})
+except TransactionError as e:
+    print(f"Transaction error: {e}")
+```
+
+### Token Swaps
+
+```python
+from pipeiq import SwapType, SwapConfig
+
+# Get a swap quote
+quote = await wallet.get_swap_quote(
+    input_token="SOL",
+    output_token="USDC",
+    amount=1.0,
+    swap_type=SwapType.EXACT_IN
+)
+print(f"Expected output: {quote['outputAmount']} USDC")
+print(f"Price impact: {quote['priceImpact']}%")
+
+# Execute a swap
+config = SwapConfig(
+    slippage=0.01,  # 1% slippage tolerance
+    deadline=int(datetime.now().timestamp()) + 3600  # 1 hour deadline
+)
+
+result = await wallet.execute_swap(
+    input_token="SOL",
+    output_token="USDC",
+    amount=1.0,
+    config=config,
+    swap_type=SwapType.EXACT_IN
+)
+print(f"Swap executed: {result['signature']}")
+```
+
+### NFT Operations
+
+```python
+from pipeiq import NFTStandard, NFTConfig
+
+# Get NFT metadata
+config = NFTConfig(
+    standard=NFTStandard.METAPLEX,
+    verify_ownership=True,
+    include_metadata=True
+)
+
+metadata = await wallet.get_nft_metadata("nft_mint_address", config)
+print(f"NFT Name: {metadata['name']}")
+print(f"Collection: {metadata['collection']['key']}")
+
+# Get NFT accounts
+accounts = await wallet.get_nft_accounts("owner_address", config)
+for account in accounts:
+    print(f"NFT: {account['mint']}")
+    print(f"Amount: {account['amount']}")
+
+# Transfer NFT
+result = await wallet.transfer_nft(
+    mint_address="nft_mint_address",
+    to_address="recipient_address",
+    config=TransactionConfig(fee_payer="sender_address")
+)
+print(f"NFT transfer initiated: {result['signature']}")
+```
+
+### Advanced Transaction Features
+
+```python
+# Get priority fee estimate
+transaction = {
+    "from": "sender_address",
+    "to": "recipient_address",
+    "amount": 1.0
+}
+
+fee_estimate = await wallet.get_priority_fee_estimate(transaction)
+print(f"Recommended priority fee: {fee_estimate['recommendedPriorityFee']}")
+
+# Get compute unit estimate
+compute_estimate = await wallet.get_compute_unit_estimate(transaction)
+print(f"Recommended compute units: {compute_estimate['recommendedComputeUnits']}")
+
+# Get transaction history
+history = await wallet.get_transaction_history(
+    address="wallet_address",
+    limit=10,
+    before="last_signature"
+)
+
+for tx in history:
+    print(f"Transaction: {tx['signature']}")
+    print(f"Type: {tx['type']}")
+    print(f"Fee: {tx['fee']}")
+    print(f"Status: {tx['status']}")
+```
+
+### Error Handling
+
+```python
+from pipeiq import SwapError, NFTError
+
+try:
+    # Attempt invalid swap
+    await wallet.execute_swap("SOL", "USDC", -1.0, SwapConfig())
+except SwapError as e:
+    print(f"Swap error: {e}")
+
+try:
+    # Attempt invalid NFT transfer
+    await wallet.transfer_nft("", "recipient_address")
+except NFTError as e:
+    print(f"NFT error: {e}")
+```
+
+### Token Staking
+
+```python
+from pipeiq import StakeConfig
+
+# Get stake accounts
+accounts = await wallet.get_stake_accounts(owner="wallet_address")
+for acc in accounts:
+    print(f"Stake Account: {acc['address']}, Amount: {acc['amount']}")
+
+# Get stake rewards
+rewards = await wallet.get_stake_rewards(stake_account="stake_account_address")
+for reward in rewards:
+    print(f"Epoch: {reward['epoch']}, Amount: {reward['amount']}")
+
+# Stake tokens
+stake_config = StakeConfig(
+    validator_address="validator_address",
+    amount=10.0,
+    lockup_period=3600,
+    auto_compound=True
+)
+result = await wallet.stake_tokens(stake_config)
+print(f"Stake initiated: {result['signature']}")
+
+# Unstake tokens
+result = await wallet.unstake_tokens(stake_account="stake_account_address", amount=5.0)
+print(f"Unstake initiated: {result['signature']}")
+```
+
+### Program Interactions
+
+```python
+from pipeiq import ProgramConfig, ProgramType
+
+# Get program accounts
+accounts = await wallet.get_program_accounts(program_id="program_id")
+for acc in accounts:
+    print(f"Program Account: {acc['pubkey']}")
+
+# Get program data
+program_data = await wallet.get_program_data("program_id")
+print(f"Program: {program_data['metadata']['name']}")
+
+# Execute a program instruction
+program_config = ProgramConfig(
+    program_id="program_id",
+    program_type=ProgramType.TOKEN,
+    instruction_data={"action": "transfer"},
+    accounts=[{"pubkey": "account1", "isSigner": True}],
+    signers=["account1"]
+)
+result = await wallet.execute_program(program_config)
+print(f"Program execution signature: {result['signature']}")
+```
+
+### Advanced Wallet Management
+
+```python
+from pipeiq import WalletFeatureConfig, WalletFeature
+
+# Get wallet features
+features = await wallet.get_wallet_features()
+for feature in features:
+    print(f"Feature: {feature['feature']}, Enabled: {feature['enabled']}")
+
+# Configure a wallet feature
+feature_config = WalletFeatureConfig(
+    feature=WalletFeature.MULTI_SIG,
+    enabled=True,
+    options={"threshold": 2, "owners": ["owner1", "owner2"]}
+)
+result = await wallet.configure_wallet_feature(feature_config)
+print(f"Feature configured: {result['feature']}")
+
+# Get wallet permissions
+permissions = await wallet.get_wallet_permissions()
+print(f"Allowed Programs: {permissions['allowedPrograms']}")
+
+# Update wallet permissions
+new_permissions = {
+    "allowedPrograms": ["new_program"],
+    "allowedDomains": ["new_domain.com"],
+    "allowedOperations": ["new_operation"]
+}
+result = await wallet.update_wallet_permissions(new_permissions)
+print(f"Permissions updated: {result}")
+```
