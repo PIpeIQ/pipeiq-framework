@@ -166,7 +166,7 @@ class PhantomWallet:
             public_key = os.getenv("PHANTOM_PUBLIC_KEY")
             if not public_key:
                 raise ConnectionError("PHANTOM_PUBLIC_KEY environment variable is required")
-            logger.info(f"📋 Using public key from environment: {public_key[:8]}...{public_key[-8:] if len(public_key) > 16 else public_key}")
+            logger.info(f"📋 Using public key from environment: {public_key if len(public_key) <= 16 else f'{public_key[:8]}...{public_key[-8:]}'}")
             result = {
                 "connected": True,
                 "publicKey": public_key,
@@ -189,7 +189,7 @@ class PhantomWallet:
     
     async def get_balance(self, public_key: str) -> float:
         """Get wallet balance from Solana RPC."""
-        logger.info(f"💰 Fetching balance for public key: {public_key[:8]}...{public_key[-8:] if len(public_key) > 16 else public_key}")
+        logger.info(f"💰 Fetching balance for public key: {public_key if len(public_key) <= 16 else f'{public_key[:8]}...{public_key[-8:]}'}")
         if not self._connected:
             logger.error("❌ Cannot get balance: Wallet not connected")
             raise ConnectionError("Wallet not connected")
