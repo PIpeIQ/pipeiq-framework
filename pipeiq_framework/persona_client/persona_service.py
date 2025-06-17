@@ -1,3 +1,10 @@
+"""
+Persona Service
+
+This module provides a service for interacting with Persona's identity verification API.
+
+"""
+
 from enum import Enum
 from typing import Dict, List, Optional, Union, Any, Callable
 from dataclasses import dataclass, field
