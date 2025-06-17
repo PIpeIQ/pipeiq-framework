@@ -28,10 +28,10 @@ pip install pipeiq
 
 ## Key Features
 
-### Integration with Phantom Wallet 
-### Integration with Prime Intellect for Decentralized Compute
-### Integration with Worldcoin for proof-of-personhood authentication
-### Integration for Know Your Customer (KYC) operation with Persona
+1. Integration with Phantom Wallet 
+2. Integration with Prime Intellect for Decentralized Compute
+3. Integration with Worldcoin for proof-of-personhood authentication
+4. Integration for Know Your Customer (KYC) operation with Persona
 
 ---
 
