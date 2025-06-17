@@ -135,6 +135,7 @@ class PhantomWallet:
         self._connected = False
         self._session: Optional[aiohttp.ClientSession] = None
         self._public_key = public_key  # Accept public key directly
+        self._initial_public_key = public_key  # Track if key was provided during init
         logger.info(f"🔧 PhantomWallet initialized with network: {self.config.network.value}")
     
     async def connect(self) -> Dict[str, Any]:
@@ -168,11 +169,21 @@ class PhantomWallet:
     async def disconnect(self) -> None:
         """Disconnect from Phantom wallet."""
         logger.info("🔌 Disconnecting from Phantom wallet...")
-        if self._connected and self._session:
+        
+        # Close session if it exists
+        if self._session:
             await self._session.close()
-            self._session = None  # Clear the session reference
-            self._public_key = None  # Clear the stored public key
-            self._connected = False
+            self._session = None
+        
+        # Always reset connection state, but preserve the original public key
+        # Only clear public key if it wasn't provided during initialization
+        was_connected = self._connected
+        self._connected = False
+        
+        # Reset public key to initial state (preserve if provided during init)
+        self._public_key = self._initial_public_key
+        
+        if was_connected:
             logger.info("✅ Successfully disconnected from Phantom wallet")
         else:
             logger.info("⚠️ Wallet was not connected")
