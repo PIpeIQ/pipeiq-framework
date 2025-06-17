@@ -413,28 +413,56 @@ class PersonaService:
             raise PersonaError(f"Invalid JSON response: {str(e)}")
 
     async def _make_request_with_retry(self, *args, **kwargs):
-        """Wrapper method that applies retry and cache decorators using instance configurations."""
-        # Apply retry logic
+        """Wrapper method that applies retry logic using instance configurations."""
         last_exception = None
         delay = self.retry_config.initial_delay
         
         for attempt in range(self.retry_config.max_retries + 1):
             try:
                 return await self._make_request(*args, **kwargs)
-            except (ConnectionError, PersonaError) as e:
+            except ConnectionError as e:
                 last_exception = e
-                
-                # Don't retry on certain errors
-                if isinstance(e, PersonaError) and "Authentication failed" in str(e):
-                    raise
-                
                 if attempt < self.retry_config.max_retries:
-                    # Calculate next delay based on strategy
-                    if self.retry_config.strategy == RetryStrategy.EXPONENTIAL_BACKOFF:
-                        delay *= 2
                     await asyncio.sleep(delay)
+                    # Apply retry strategy with proper delay capping
+                    if self.retry_config.strategy == RetryStrategy.EXPONENTIAL_BACKOFF:
+                        delay = min(delay * 2, self.retry_config.max_delay)
+                    elif self.retry_config.strategy == RetryStrategy.LINEAR_BACKOFF:
+                        delay = min(delay + self.retry_config.initial_delay, self.retry_config.max_delay)
+                    # CONSTANT strategy keeps the same delay
                 else:
                     raise last_exception
+            except PersonaError as e:
+                # Check if this is a wrapped HTTP error that we should retry
+                should_retry = False
+                
+                # Extract status code if it's a rate limit or server error
+                if "Rate limit exceeded" in str(e):
+                    should_retry = 429 in self.retry_config.retry_on_status_codes
+                elif "API error" in str(e) and any(code_str in str(e) for code_str in ["500", "502", "503", "504"]):
+                    # Try to extract the actual status code from error message
+                    for code in self.retry_config.retry_on_status_codes:
+                        if str(code) in str(e):
+                            should_retry = True
+                            break
+                
+                # Don't retry on authentication errors or other client errors
+                if "Authentication failed" in str(e):
+                    raise
+                
+                last_exception = e
+                if should_retry and attempt < self.retry_config.max_retries:
+                    await asyncio.sleep(delay)
+                    # Apply retry strategy with proper delay capping
+                    if self.retry_config.strategy == RetryStrategy.EXPONENTIAL_BACKOFF:
+                        delay = min(delay * 2, self.retry_config.max_delay)
+                    elif self.retry_config.strategy == RetryStrategy.LINEAR_BACKOFF:
+                        delay = min(delay + self.retry_config.initial_delay, self.retry_config.max_delay)
+                    # CONSTANT strategy keeps the same delay
+                else:
+                    raise last_exception
+        
+        raise last_exception
 
     async def create_inquiry(self, config: InquiryConfig) -> Dict[str, Any]:
         """Create a new identity verification inquiry.
