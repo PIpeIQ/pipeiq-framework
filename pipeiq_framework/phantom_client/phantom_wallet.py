@@ -149,22 +149,22 @@ class FeatureError(PhantomError):
 class PhantomWallet:
     """Phantom wallet integration for PipeIQ framework."""
     
-    def __init__(self, config: Optional[WalletConfig] = None):
-        """Initialize Phantom wallet with optional configuration."""
+    def __init__(self, config: Optional[WalletConfig] = None, public_key: Optional[str] = None):
+        """Initialize Phantom wallet with optional configuration and public key."""
         self.config = config or WalletConfig()
         self._connected = False
         self._session: Optional[aiohttp.ClientSession] = None
-        self._public_key: Optional[str] = None
+        self._public_key = public_key  # Accept public key directly
         logger.info(f"🔧 PhantomWallet initialized with network: {self.config.network.value}")
     
     async def connect(self) -> Dict[str, Any]:
         """Connect to Phantom wallet."""
         logger.info("🔗 Attempting to connect to Phantom wallet...")
         if not self._connected:
-            # Validate public key first before creating any resources
-            public_key = os.getenv("PHANTOM_PUBLIC_KEY")
+            # Use stored public key or fallback to environment variable
+            public_key = self._public_key or os.getenv("PHANTOM_PUBLIC_KEY")
             if not public_key:
-                raise PhantomConnectionError("PHANTOM_PUBLIC_KEY environment variable is required")
+                raise PhantomConnectionError("Public key is required. Pass it during initialization or set PHANTOM_PUBLIC_KEY environment variable.")
             
             logger.info("Creating new session and establishing connection...")
             self._session = aiohttp.ClientSession()
