@@ -24,7 +24,7 @@ You can install `pipeiq` directly from PyPI:
 
 ```bash
 pip install pipeiq
-
+```
 
 ## Key Features
 
