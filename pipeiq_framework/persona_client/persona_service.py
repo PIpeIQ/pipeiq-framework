@@ -123,7 +123,7 @@ class DocumentConfig:
     metadata: Optional[Dict[str, Any]] = field(default_factory=dict)
     front_image: Optional[str] = None  # Base64 encoded image
     back_image: Optional[str] = None   # Base64 encoded image
-    selfie_image: Optional[str] = None # Base64 encoded image
+    selfie_image: Optional[str] = field(default_factory=list) # Base64 encoded image
 
 @dataclass
 class CaseConfig:
@@ -132,7 +132,7 @@ class CaseConfig:
     status: CaseStatus = CaseStatus.OPEN
     metadata: Optional[Dict[str, Any]] = None
     assignee: Optional[str] = None
-    tags: Optional[List[str]] = field(default_factory=list)
+    tags: Optional[List[str]] = field(default_factory=list)  
 
 @dataclass
 class VerificationMethodConfig:
