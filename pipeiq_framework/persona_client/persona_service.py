@@ -118,6 +118,7 @@ class VerificationConfig:
 class ReportConfig:
     """Configuration for creating a report."""
     type: ReportType
+    inquiry_id: str
     metadata: Optional[Dict[str, Any]] = None
 
 @dataclass
@@ -128,7 +129,7 @@ class DocumentConfig:
     metadata: Optional[Dict[str, Any]] = field(default_factory=dict)
     front_image: Optional[str] = None  # Base64 encoded image
     back_image: Optional[str] = None   # Base64 encoded image
-    selfie_image: Optional[str] = field(default_factory=list) # Base64 encoded image
+    selfie_image: Optional[List[str]] = field(default_factory=list) # Base64 encoded images
 
 @dataclass
 class CaseConfig:
@@ -402,6 +403,14 @@ class PersonaService:
                 raise PersonaError(f"API error: {error_text}")
             return await response.json()
 
+    def _make_request_with_retry(self, *args, **kwargs):
+        """Wrapper method that applies retry and cache decorators using instance configurations."""
+        @with_retry(self.retry_config)
+        @with_cache(self.cache)
+        async def decorated_request(*args, **kwargs):
+            return await self._make_request(*args, **kwargs)
+        return decorated_request(*args, **kwargs)
+
     async def create_inquiry(self, config: InquiryConfig) -> Dict[str, Any]:
         """Create a new identity verification inquiry.
         
@@ -425,7 +434,7 @@ class PersonaService:
             }
         }
         
-        return await self._make_request("POST", "inquiries", json=data)
+        return await self._make_request_with_retry("POST", "inquiries", json=data)
 
     async def get_inquiry(self, inquiry_id: str) -> Dict[str, Any]:
         """Get details of a specific inquiry.
@@ -436,7 +445,7 @@ class PersonaService:
         Returns:
             Dict containing inquiry details
         """
-        return await self._make_request("GET", f"inquiries/{inquiry_id}")
+        return await self._make_request_with_retry("GET", f"inquiries/{inquiry_id}")
 
     async def create_verification(self, inquiry_id: str, config: VerificationConfig) -> Dict[str, Any]:
         """Create a new verification for an inquiry.
@@ -460,7 +469,7 @@ class PersonaService:
             }
         }
         
-        return await self._make_request("POST", f"inquiries/{inquiry_id}/verifications", json=data)
+        return await self._make_request_with_retry("POST", f"inquiries/{inquiry_id}/verifications", json=data)
 
     async def get_verification(self, inquiry_id: str, verification_id: str) -> Dict[str, Any]:
         """Get details of a specific verification.
@@ -472,7 +481,7 @@ class PersonaService:
         Returns:
             Dict containing verification details
         """
-        return await self._make_request("GET", f"inquiries/{inquiry_id}/verifications/{verification_id}")
+        return await self._make_request_with_retry("GET", f"inquiries/{inquiry_id}/verifications/{verification_id}")
 
     async def create_report(self, inquiry_id: str, config: ReportConfig) -> Dict[str, Any]:
         """Create a new report for an inquiry.
@@ -489,12 +498,13 @@ class PersonaService:
                 "type": "report",
                 "attributes": {
                     "type": config.type.value,
+                    "inquiry_id": config.inquiry_id,
                     "metadata": config.metadata
                 }
             }
         }
         
-        return await self._make_request("POST", f"inquiries/{inquiry_id}/reports", json=data)
+        return await self._make_request_with_retry("POST", f"inquiries/{inquiry_id}/reports", json=data)
 
     async def get_report(self, inquiry_id: str, report_id: str) -> Dict[str, Any]:
         """Get details of a specific report.
@@ -506,7 +516,7 @@ class PersonaService:
         Returns:
             Dict containing report details
         """
-        return await self._make_request("GET", f"inquiries/{inquiry_id}/reports/{report_id}")
+        return await self._make_request_with_retry("GET", f"inquiries/{inquiry_id}/reports/{report_id}")
 
     async def list_inquiries(
         self,
@@ -531,7 +541,7 @@ class PersonaService:
         if status:
             params["filter[status]"] = status.value
             
-        return await self._make_request("GET", "inquiries", params=params)
+        return await self._make_request_with_retry("GET", "inquiries", params=params)
 
     async def approve_inquiry(self, inquiry_id: str) -> Dict[str, Any]:
         """Approve an inquiry.
@@ -542,7 +552,7 @@ class PersonaService:
         Returns:
             Dict containing updated inquiry details
         """
-        return await self._make_request("POST", f"inquiries/{inquiry_id}/approve")
+        return await self._make_request_with_retry("POST", f"inquiries/{inquiry_id}/approve")
 
     async def decline_inquiry(self, inquiry_id: str) -> Dict[str, Any]:
         """Decline an inquiry.
@@ -553,7 +563,7 @@ class PersonaService:
         Returns:
             Dict containing updated inquiry details
         """
-        return await self._make_request("POST", f"inquiries/{inquiry_id}/decline")
+        return await self._make_request_with_retry("POST", f"inquiries/{inquiry_id}/decline")
 
     async def mark_for_review(self, inquiry_id: str) -> Dict[str, Any]:
         """Mark an inquiry for manual review.
@@ -564,7 +574,7 @@ class PersonaService:
         Returns:
             Dict containing updated inquiry details
         """
-        return await self._make_request("POST", f"inquiries/{inquiry_id}/review")
+        return await self._make_request_with_retry("POST", f"inquiries/{inquiry_id}/review")
 
     async def create_document_verification(
         self,
@@ -594,7 +604,7 @@ class PersonaService:
             }
         }
         
-        return await self._make_request("POST", f"inquiries/{inquiry_id}/document_verifications", json=data)
+        return await self._make_request_with_retry("POST", f"inquiries/{inquiry_id}/document_verifications", json=data)
 
     async def create_case(self, config: CaseConfig) -> Dict[str, Any]:
         """Create a new case.
@@ -618,7 +628,7 @@ class PersonaService:
             }
         }
         
-        return await self._make_request("POST", "cases", json=data)
+        return await self._make_request_with_retry("POST", "cases", json=data)
 
     async def get_case(self, case_id: str) -> Dict[str, Any]:
         """Get details of a specific case.
@@ -629,7 +639,7 @@ class PersonaService:
         Returns:
             Dict containing case details
         """
-        return await self._make_request("GET", f"cases/{case_id}")
+        return await self._make_request_with_retry("GET", f"cases/{case_id}")
 
     async def update_case(
         self,
@@ -667,7 +677,7 @@ class PersonaService:
         if metadata:
             data["data"]["attributes"]["metadata"] = metadata
             
-        return await self._make_request("PATCH", f"cases/{case_id}", json=data)
+        return await self._make_request_with_retry("PATCH", f"cases/{case_id}", json=data)
 
     async def configure_verification_methods(
         self,
@@ -699,7 +709,7 @@ class PersonaService:
             }
         }
         
-        return await self._make_request("POST", f"inquiries/{inquiry_id}/verification_methods", json=data)
+        return await self._make_request_with_retry("POST", f"inquiries/{inquiry_id}/verification_methods", json=data)
 
     async def get_verification_methods(self, inquiry_id: str) -> Dict[str, Any]:
         """Get configured verification methods for an inquiry.
@@ -710,7 +720,7 @@ class PersonaService:
         Returns:
             Dict containing verification method configurations
         """
-        return await self._make_request("GET", f"inquiries/{inquiry_id}/verification_methods")
+        return await self._make_request_with_retry("GET", f"inquiries/{inquiry_id}/verification_methods")
 
     async def list_cases(
         self,
@@ -743,7 +753,7 @@ class PersonaService:
         if tags:
             params["filter[tags]"] = ",".join(tags)
             
-        return await self._make_request("GET", "cases", params=params)
+        return await self._make_request_with_retry("GET", "cases", params=params)
 
     async def add_case_tag(self, case_id: str, tag: str) -> Dict[str, Any]:
         """Add a tag to a case.
@@ -764,7 +774,7 @@ class PersonaService:
             }
         }
         
-        return await self._make_request("POST", f"cases/{case_id}/tags", json=data)
+        return await self._make_request_with_retry("POST", f"cases/{case_id}/tags", json=data)
 
     async def remove_case_tag(self, case_id: str, tag: str) -> Dict[str, Any]:
         """Remove a tag from a case.
@@ -776,7 +786,7 @@ class PersonaService:
         Returns:
             Dict containing updated case details
         """
-        return await self._make_request("DELETE", f"cases/{case_id}/tags/{tag}")
+        return await self._make_request_with_retry("DELETE", f"cases/{case_id}/tags/{tag}")
 
     async def register_webhook(self, config: WebhookConfig) -> Dict[str, Any]:
         """Register a webhook endpoint.
@@ -799,7 +809,7 @@ class PersonaService:
             }
         }
         
-        return await self._make_request("POST", "webhooks", json=data)
+        return await self._make_request_with_retry("POST", "webhooks", json=data)
 
     async def list_webhooks(self) -> Dict[str, Any]:
         """List all registered webhooks.
@@ -807,7 +817,7 @@ class PersonaService:
         Returns:
             Dict containing list of webhooks
         """
-        return await self._make_request("GET", "webhooks")
+        return await self._make_request_with_retry("GET", "webhooks")
 
     async def delete_webhook(self, webhook_id: str) -> None:
         """Delete a webhook endpoint.
@@ -815,7 +825,7 @@ class PersonaService:
         Args:
             webhook_id: ID of the webhook to delete
         """
-        return await self._make_request("DELETE", f"webhooks/{webhook_id}")
+        return await self._make_request_with_retry("DELETE", f"webhooks/{webhook_id}")
 
     async def execute_batch_operation(self, config: BatchOperationConfig) -> Dict[str, Any]:
         """Execute a batch operation.
@@ -837,7 +847,7 @@ class PersonaService:
             }
         }
         
-        return await self._make_request("POST", "batch_operations", json=data)
+        return await self._make_request_with_retry("POST", "batch_operations", json=data)
 
     async def get_batch_operation_status(self, operation_id: str) -> Dict[str, Any]:
         """Get the status of a batch operation.
@@ -848,7 +858,7 @@ class PersonaService:
         Returns:
             Dict containing batch operation status and results
         """
-        return await self._make_request("GET", f"batch_operations/{operation_id}")
+        return await self._make_request_with_retry("GET", f"batch_operations/{operation_id}")
 
     async def verify_webhook_signature(
         self,

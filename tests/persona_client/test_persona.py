@@ -170,8 +170,9 @@ class TestConfigurationClasses:
     
     def test_report_config(self):
         """Test ReportConfig dataclass."""
-        config = ReportConfig(type=ReportType.WATCHLIST)
+        config = ReportConfig(type=ReportType.WATCHLIST, inquiry_id="test_inquiry")
         assert config.type == ReportType.WATCHLIST
+        assert config.inquiry_id == "test_inquiry"
         assert config.metadata is None
     
     def test_document_config(self):
