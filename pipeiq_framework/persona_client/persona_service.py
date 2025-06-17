@@ -523,7 +523,6 @@ class PersonaService:
                 "type": "report",
                 "attributes": {
                     "type": config.type.value,
-                    "inquiry_id": config.inquiry_id,
                     "metadata": config.metadata
                 }
             }
