@@ -4,7 +4,7 @@ import sys
 import logging
 
 # Add the pipeiq_framework to the path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 from pipeiq_framework.phantom_client.phantom_wallet import PhantomWallet
 from pipeiq_framework.phantom_client.errors import PhantomConnectionError
@@ -111,6 +111,3 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main()) 
-
-#To run:
-#/pipeiq-framework> python -m pipeiq_framework.phantom_client.examples.phantom_example
