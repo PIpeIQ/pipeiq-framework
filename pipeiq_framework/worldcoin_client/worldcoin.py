@@ -6,20 +6,10 @@ from datetime import datetime
 import asyncio
 import json
 import os
-from dotenv import load_dotenv
+# from dotenv import load_dotenv
 
 
 logger = logging.getLogger(__name__)
-# Load environment variables from .env file
-load_dotenv()
-
-# Configuration from environment variables
-APP_ID = os.getenv("WORLDCOIN_APP_ID")
-
-
-# Validate required environment variables
-if not APP_ID:
-    raise ValueError("WORLDCOIN_APP_ID environment variable is required")
 
 class WorldcoinError(Exception):
     """Base exception for Worldcoin client errors."""
@@ -183,40 +173,3 @@ class WorldcoinClient:
         data = r.json()
         logger.info("Proof verified")
         return data
-
-
-if __name__ == "__main__":
-    async def main():
-        ACTION = "proof_verification"
-
-        async with WorldcoinClient(app_id=APP_ID) as wc:
-            try:
-                jwks = await wc.get_jwks()
-                print("\n=== JWKS ===")
-                print(jwks)
-            except WorldcoinJWKSError as e:
-                logger.error("JWKS error: %s", e)
-
-            try:
-                meta = await wc.get_action_metadata(action=ACTION)
-                print("\n=== Action metadata ===")
-                print(meta)
-            except WorldcoinMetadataError as e:
-                logger.error("Metadata error: %s", e)
-
-            sample = dict(
-                nullifier_hash="0x2bf8406809dcefb1486dadc96c0a897db9bab002053054cf64272db512c6fbd8",
-                merkle_root="0x2264a66d162d7893e12ea8e3c072c51e785bc085ad655f64c10c1a61e00f0bc2",
-                proof="0x" + "0"*512,  # <-- replace with full proof
-                action=ACTION,
-                signal_hash="0x00c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a4",
-                verification_level="orb",  # Add verification level
-            )
-            try:
-                res = await wc.verify_proof(**sample)
-                print("\n=== Proof verification ===")
-                print(res)
-            except WorldcoinVerifyError as e:
-                logger.warning("Verify error: %s", e)
-
-    asyncio.run(main())
