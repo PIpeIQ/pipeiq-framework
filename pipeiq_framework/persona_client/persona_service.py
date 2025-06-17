@@ -432,7 +432,12 @@ class PersonaService:
                 if attempt < self.retry_config.max_retries:
                     # Calculate next delay based on strategy
                     if self.retry_config.strategy == RetryStrategy.EXPONENTIAL_BACKOFF:
-                        delay *= 2
+                        delay = min(delay * 2, self.retry_config.max_delay)
+                    elif self.retry_config.strategy == RetryStrategy.LINEAR_BACKOFF:
+                        delay = min(delay + self.retry_config.initial_delay, self.retry_config.max_delay)
+                    elif self.retry_config.strategy == RetryStrategy.CONSTANT:
+                        delay = self.retry_config.initial_delay
+                    
                     await asyncio.sleep(delay)
                 else:
                     raise last_exception

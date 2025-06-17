@@ -16,7 +16,7 @@ import time
 import os
 from datetime import datetime, timedelta
 from typing import Dict, Any, List
-import sys
+import sys 
 import traceback
 
 # Import all classes from the Persona module
@@ -53,7 +53,7 @@ def api_key():
     if not key:
         pytest.exit(
             "PERSONA_API_KEY environment variable not set!\n"
-            "Set it with: export PERSONA_API_KEY='persona_sandbox_f296332e-4405-4f6e-a89b-f1d84ad57b04'"
+            "Set it with: export PERSONA_API_KEY='your_persona_api_key_here'"
         )
     return key
 
