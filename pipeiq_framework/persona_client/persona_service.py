@@ -1,6 +1,7 @@
 """
 Persona Service
 This module provides a service for interacting with Persona's identity verification API.
+
 """
 
 from enum import Enum
