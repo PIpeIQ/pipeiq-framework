@@ -1,9 +1,11 @@
 [tool.poetry]
-name = "pipeiq_framework"
+name = "pipeiq"
 version = "0.1.0"
-description = ""
+description = "PIPEIQ is an open-source framework that enables developers to seamlessly connect and orchestrate AI tools across the Web2 and Web3 ecosystems. It abstracts away the complexities of identity, messaging, and orchestration by providing standardized primitives for agent coordination, tool invocation, and cross-network integration."
 authors = ["Shankar R <shankar@pipeiq.ai>"]
 license = "MIT"
+repository = "https://github.com/PIpeIQ/pipeiq-framework"
+readme = "README.md"
 packages = [
     { include = "pipeiq_framework" }
 ]
