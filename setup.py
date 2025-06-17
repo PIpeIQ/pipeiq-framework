@@ -34,6 +34,12 @@ setup(
             "websockets>=11.0.3",
             "cachetools>=5.3.0",
             "backoff>=2.2.1",
+        ],
+        "openrouter": [
+            "aiohttp>=3.8.0",
+            "typing-extensions>=4.0.0",
+            "cachetools>=5.3.0",
+            "backoff>=2.2.1",
         ]
     },
     author="PipeIQ",

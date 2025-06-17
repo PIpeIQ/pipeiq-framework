@@ -2153,14 +2153,14 @@ These guidelines and best practices help ensure:
 - Secure operations
 - Easy maintenance and monitoring
 
-# HelloMoon MCP Connector
+# OpenRouter MCP Connector
 
-The HelloMoon MCP connector provides a comprehensive interface for interacting with the HelloMoon API, following the Model Context Protocol (MCP) pattern.
+The OpenRouter MCP connector provides a unified interface for accessing various AI models through OpenRouter's API, following the Model Context Protocol (MCP) pattern.
 
 ## Features
 
-- **REST API Support**: Full coverage of HelloMoon's REST API endpoints
-- **WebSocket Support**: Real-time data streaming capabilities
+- **Unified Model Access**: Access multiple AI models through a single interface
+- **Chat & Text Completions**: Support for both chat and text completion endpoints
 - **Rate Limiting**: Built-in rate limiting with token bucket algorithm
 - **Caching**: Configurable caching with TTL and size limits
 - **Error Handling**: Comprehensive error handling with retry mechanism
@@ -2170,23 +2170,23 @@ The HelloMoon MCP connector provides a comprehensive interface for interacting w
 ## Installation
 
 ```bash
-pip install pipeiq[hellomoon]
+pip install pipeiq[openrouter]
 ```
 
 ## Configuration
 
 ```python
-from pipeiq.hellomoon_mcp import HelloMoonConfig
+from pipeiq.openrouter_mcp import OpenRouterConfig
 
-config = HelloMoonConfig(
+config = OpenRouterConfig(
     api_key="your_api_key",
-    base_url="https://api.hellomoon.io/v1",  # Optional
-    ws_url="wss://api.hellomoon.io/v1/ws",   # Optional
-    timeout=30,                              # Optional
-    max_retries=3,                           # Optional
-    rate_limit=100,                          # Optional
-    cache_ttl=300,                           # Optional
-    cache_size=1000                          # Optional
+    site_url="https://your-site.com",  # Optional
+    site_name="Your Site Name",        # Optional
+    timeout=30,                        # Optional
+    max_retries=3,                     # Optional
+    rate_limit=100,                    # Optional
+    cache_ttl=300,                     # Optional
+    cache_size=1000                    # Optional
 )
 ```
 
@@ -2195,81 +2195,67 @@ config = HelloMoonConfig(
 ### Basic Usage
 
 ```python
-from pipeiq.hellomoon_mcp import HelloMoonProvider, HelloMoonConfig
+from pipeiq.openrouter_mcp import OpenRouterProvider, OpenRouterConfig
 
 # Create configuration
-config = HelloMoonConfig(api_key="your_api_key")
+config = OpenRouterConfig(api_key="your_api_key")
 
 # Use the provider
-async with HelloMoonProvider(config) as provider:
+async with OpenRouterProvider(config) as provider:
     # Get the model interface
     model = provider.get_model()
     
-    # Get NFT metadata
-    nft_data = await model.get_nft_metadata("mint_address")
+    # Get chat completion
+    response = await model.chat_completion(
+        messages=[{"role": "user", "content": "Hello"}],
+        model="gpt-4",
+        temperature=0.7
+    )
     
-    # Get market data
-    market_data = await model.get_market_data("mint_address")
+    # Get text completion
+    response = await model.text_completion(
+        prompt="Hello",
+        model="gpt-4",
+        temperature=0.7
+    )
 ```
 
 ### Available Operations
 
-The HelloMoon model interface provides the following operations:
+The OpenRouter model interface provides the following operations:
 
-#### Account Information
+#### Chat Completion
 ```python
-account_info = await model.get_account_info("address")
+response = await model.chat_completion(
+    messages=[
+        {"role": "user", "content": "Hello"},
+        {"role": "assistant", "content": "Hi there!"},
+        {"role": "user", "content": "How are you?"}
+    ],
+    model="gpt-4",
+    temperature=0.7,
+    max_tokens=100
+)
 ```
 
-#### Transaction Information
+#### Text Completion
 ```python
-tx_info = await model.get_transaction_info("signature")
+response = await model.text_completion(
+    prompt="Write a poem about AI",
+    model="gpt-4",
+    temperature=0.8,
+    max_tokens=200
+)
 ```
 
-#### NFT Operations
+#### List Available Models
 ```python
-# Get NFT metadata
-nft_data = await model.get_nft_metadata("mint_address")
-
-# Get market data
-market_data = await model.get_market_data("mint_address")
-
-# Get token information
-token_info = await model.get_token_info("mint_address")
-
-# Get collection information
-collection_info = await model.get_collection_info("collection_id")
+models = await model.list_models()
 ```
 
-#### Market Operations
+#### Get Credit Information
 ```python
-# Get recent sales
-sales = await model.get_recent_sales(
-    collection_id="collection_id",
-    limit=100,
-    offset=0
-)
-
-# Get active listings
-listings = await model.get_active_listings(
-    collection_id="collection_id",
-    limit=100,
-    offset=0
-)
-
-# Get active offers
-offers = await model.get_active_offers(
-    collection_id="collection_id",
-    limit=100,
-    offset=0
-)
-
-# Get active bids
-bids = await model.get_active_bids(
-    collection_id="collection_id",
-    limit=100,
-    offset=0
-)
+credits = await model.get_credits()
 ```
 
 ## Error Handling
@@ -2277,8 +2263,8 @@ bids = await model.get_active_bids(
 The connector provides specific exception classes for different error scenarios:
 
 ```python
-from pipeiq.hellomoon_mcp import (
-    HelloMoonError,
+from pipeiq.openrouter_mcp import (
+    OpenRouterError,
     ConnectionError,
     AuthenticationError,
     RateLimitError,
@@ -2286,9 +2272,11 @@ from pipeiq.hellomoon_mcp import (
 )
 
 try:
-    async with HelloMoonProvider(config) as provider:
+    async with OpenRouterProvider(config) as provider:
         model = provider.get_model()
-        data = await model.get_nft_metadata("mint_address")
+        response = await model.chat_completion(
+            messages=[{"role": "user", "content": "Hello"}]
+        )
 except AuthenticationError:
     print("Invalid API key")
 except RateLimitError:
@@ -2297,8 +2285,8 @@ except ConnectionError:
     print("Connection error")
 except ValidationError:
     print("Invalid input")
-except HelloMoonError:
-    print("Other HelloMoon error")
+except OpenRouterError:
+    print("Other OpenRouter error")
 ```
 
 ## Best Practices
@@ -2325,42 +2313,54 @@ except HelloMoonError:
 
 ## API Reference
 
-### HelloMoonProvider
+### OpenRouterProvider
 
 The main entry point for the connector.
 
 ```python
-provider = HelloMoonProvider(config)
+provider = OpenRouterProvider(config)
 model = provider.get_model()
 ```
 
-### HelloMoonModel
+### OpenRouterModel
 
-Protocol defining the interface for HelloMoon data operations.
+Protocol defining the interface for OpenRouter operations.
 
 ```python
-class HelloMoonModel(Protocol):
-    async def get_account_info(self, address: str) -> Dict[str, Any]: ...
-    async def get_transaction_info(self, signature: str) -> Dict[str, Any]: ...
-    async def get_nft_metadata(self, mint_address: str) -> Dict[str, Any]: ...
-    async def get_market_data(self, mint_address: str) -> Dict[str, Any]: ...
-    async def get_token_info(self, mint_address: str) -> Dict[str, Any]: ...
-    async def get_collection_info(self, collection_id: str) -> Dict[str, Any]: ...
-    async def get_recent_sales(self, collection_id: Optional[str] = None, limit: int = 100, offset: int = 0) -> Dict[str, Any]: ...
-    async def get_active_listings(self, collection_id: Optional[str] = None, limit: int = 100, offset: int = 0) -> Dict[str, Any]: ...
-    async def get_active_offers(self, collection_id: Optional[str] = None, limit: int = 100, offset: int = 0) -> Dict[str, Any]: ...
-    async def get_active_bids(self, collection_id: Optional[str] = None, limit: int = 100, offset: int = 0) -> Dict[str, Any]: ...
+class OpenRouterModel(Protocol):
+    async def chat_completion(
+        self,
+        messages: List[Dict[str, str]],
+        model: Optional[str] = None,
+        temperature: Optional[float] = None,
+        max_tokens: Optional[int] = None,
+        stream: bool = False
+    ) -> Dict[str, Any]: ...
+    
+    async def text_completion(
+        self,
+        prompt: str,
+        model: Optional[str] = None,
+        temperature: Optional[float] = None,
+        max_tokens: Optional[int] = None,
+        stream: bool = False
+    ) -> Dict[str, Any]: ...
+    
+    async def list_models(self) -> List[Dict[str, Any]]: ...
+    
+    async def get_credits(self) -> Dict[str, Any]: ...
 ```
 
 ### Configuration Classes
 
-#### HelloMoonConfig
+#### OpenRouterConfig
 ```python
 @dataclass
-class HelloMoonConfig:
+class OpenRouterConfig:
     api_key: str
-    base_url: str = "https://api.hellomoon.io/v1"
-    ws_url: str = "wss://api.hellomoon.io/v1/ws"
+    base_url: str = "https://openrouter.ai/api/v1"
+    site_url: Optional[str] = None
+    site_name: Optional[str] = None
     timeout: int = 30
     max_retries: int = 3
     rate_limit: int = 100
