@@ -154,6 +154,7 @@ class PhantomWallet:
         self.config = config or WalletConfig()
         self._connected = False
         self._session: Optional[aiohttp.ClientSession] = None
+        self._public_key: Optional[str] = None
         logger.info(f"🔧 PhantomWallet initialized with network: {self.config.network.value}")
     
     async def connect(self) -> Dict[str, Any]:
@@ -167,6 +168,7 @@ class PhantomWallet:
             
             logger.info("Creating new session and establishing connection...")
             self._session = aiohttp.ClientSession()
+            self._public_key = public_key  # Store public key as instance variable
             self._connected = True
             logger.info(f"📋 Using public key from environment: {public_key if len(public_key) <= 16 else f'{public_key[:8]}...{public_key[-8:]}'}")
             result = {
@@ -177,12 +179,9 @@ class PhantomWallet:
             logger.info(f"✅ Successfully connected to Phantom wallet on {self.config.network.value}")
             return result
         logger.info("⚡ Already connected to Phantom wallet")
-        public_key = os.getenv("PHANTOM_PUBLIC_KEY")
-        if not public_key:
-            raise ConnectionError("PHANTOM_PUBLIC_KEY environment variable is required")
         return {
             "connected": True,
-            "publicKey": public_key,
+            "publicKey": self._public_key,
             "network": self.config.network.value
         }
     
@@ -191,6 +190,8 @@ class PhantomWallet:
         logger.info("🔌 Disconnecting from Phantom wallet...")
         if self._connected and self._session:
             await self._session.close()
+            self._session = None  # Clear the session reference
+            self._public_key = None  # Clear the stored public key
             self._connected = False
             logger.info("✅ Successfully disconnected from Phantom wallet")
         else:
@@ -289,12 +290,9 @@ class PhantomWallet:
         if not self._connected:
             raise ConnectionError("Wallet not connected")
         
-        public_key = os.getenv("PHANTOM_PUBLIC_KEY")
-        if not public_key:
-            raise ConnectionError("PHANTOM_PUBLIC_KEY environment variable is required")
         return {
             "signature": "test_signature",
-            "publicKey": public_key
+            "publicKey": self._public_key
         }
     
     async def verify_signature(
@@ -322,10 +320,7 @@ class PhantomWallet:
         if not self._connected:
             raise ConnectionError("Wallet not connected")
         
-        public_key = os.getenv("PHANTOM_PUBLIC_KEY")
-        if not public_key:
-            raise ConnectionError("PHANTOM_PUBLIC_KEY environment variable is required")
-        return [public_key]
+        return [self._public_key]
 
     # New methods for token swaps
     async def get_swap_quote(
