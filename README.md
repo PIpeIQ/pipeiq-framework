@@ -1,7 +1,3 @@
-## Warning
-
-The software is in active development, and was not audited. Use at your own risk.
-
 # PIPEIQ Framework
 
 A decentralized agent protocol to connect AI tools across Web2 and Web3—models, MCP servers, decentralized compute, and more.
