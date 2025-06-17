@@ -7,6 +7,7 @@ import logging
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 
 from pipeiq_framework.phantom_client.phantom_wallet import PhantomWallet
+from pipeiq_framework.phantom_client.errors import PhantomConnectionError
 
 # Configure logging
 logging.basicConfig(
