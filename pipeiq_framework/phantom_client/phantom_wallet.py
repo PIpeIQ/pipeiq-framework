@@ -118,7 +118,7 @@ class PhantomError(Exception):
     """Base exception for Phantom wallet errors."""
     pass
 
-class ConnectionError(PhantomError):
+class PhantomConnectionError(PhantomError):
     """Exception raised for connection errors."""
     pass
 
@@ -164,7 +164,7 @@ class PhantomWallet:
             # Validate public key first before creating any resources
             public_key = os.getenv("PHANTOM_PUBLIC_KEY")
             if not public_key:
-                raise ConnectionError("PHANTOM_PUBLIC_KEY environment variable is required")
+                raise PhantomConnectionError("PHANTOM_PUBLIC_KEY environment variable is required")
             
             logger.info("Creating new session and establishing connection...")
             self._session = aiohttp.ClientSession()
@@ -202,7 +202,7 @@ class PhantomWallet:
         logger.info(f"💰 Fetching balance for public key: {public_key if len(public_key) <= 16 else f'{public_key[:8]}...{public_key[-8:]}'}")
         if not self._connected:
             logger.error("❌ Cannot get balance: Wallet not connected")
-            raise ConnectionError("Wallet not connected")
+            raise PhantomConnectionError("Wallet not connected")
         
         try:
             # Determine RPC endpoint based on network
@@ -235,14 +235,14 @@ class PhantomWallet:
                         return balance
                     else:
                         logger.error(f"❌ Invalid RPC response: {data}")
-                        raise ConnectionError(f"Invalid RPC response: {data}")
+                        raise PhantomConnectionError(f"Invalid RPC response: {data}")
                 else:
                     logger.error(f"❌ RPC request failed with status {response.status}")
-                    raise ConnectionError(f"RPC request failed with status {response.status}")
+                    raise PhantomConnectionError(f"RPC request failed with status {response.status}")
                     
         except Exception as e:
             logger.error(f"❌ Failed to fetch balance: {e}")
-            raise ConnectionError(f"Failed to fetch balance from Solana RPC: {e}")
+            raise PhantomConnectionError(f"Failed to fetch balance from Solana RPC: {e}")
     
     async def send_transaction(
         self,
@@ -251,7 +251,7 @@ class PhantomWallet:
     ) -> Dict[str, Any]:
         """Send a transaction."""
         if not self._connected:
-            raise ConnectionError("Wallet not connected")
+            raise PhantomConnectionError("Wallet not connected")
         
         if not transaction.get("from") or not transaction.get("to"):
             raise TransactionError("Invalid transaction parameters")
@@ -264,7 +264,7 @@ class PhantomWallet:
     async def get_transaction_status(self, signature: str) -> Dict[str, Any]:
         """Get transaction status."""
         if not self._connected:
-            raise ConnectionError("Wallet not connected")
+            raise PhantomConnectionError("Wallet not connected")
         
         return {
             "signature": signature,
@@ -275,7 +275,7 @@ class PhantomWallet:
     async def get_token_accounts(self, public_key: str) -> List[Dict[str, Any]]:
         """Get token accounts."""
         if not self._connected:
-            raise ConnectionError("Wallet not connected")
+            raise PhantomConnectionError("Wallet not connected")
         
         return [
             {
@@ -288,7 +288,7 @@ class PhantomWallet:
     async def sign_message(self, message: str) -> Dict[str, str]:
         """Sign a message."""
         if not self._connected:
-            raise ConnectionError("Wallet not connected")
+            raise PhantomConnectionError("Wallet not connected")
         
         return {
             "signature": "test_signature",
@@ -303,7 +303,7 @@ class PhantomWallet:
     ) -> bool:
         """Verify a signature."""
         if not self._connected:
-            raise ConnectionError("Wallet not connected")
+            raise PhantomConnectionError("Wallet not connected")
         
         return True
     
@@ -318,7 +318,7 @@ class PhantomWallet:
     async def get_connected_accounts(self) -> List[str]:
         """Get connected accounts."""
         if not self._connected:
-            raise ConnectionError("Wallet not connected")
+            raise PhantomConnectionError("Wallet not connected")
         
         return [self._public_key]
 
@@ -332,7 +332,7 @@ class PhantomWallet:
     ) -> Dict[str, Any]:
         """Get a quote for a token swap."""
         if not self._connected:
-            raise ConnectionError("Wallet not connected")
+            raise PhantomConnectionError("Wallet not connected")
         
         return {
             "inputAmount": amount,
@@ -352,7 +352,7 @@ class PhantomWallet:
     ) -> Dict[str, Any]:
         """Execute a token swap."""
         if not self._connected:
-            raise ConnectionError("Wallet not connected")
+            raise PhantomConnectionError("Wallet not connected")
         
         quote = await self.get_swap_quote(input_token, output_token, amount, swap_type)
         
@@ -370,7 +370,7 @@ class PhantomWallet:
     ) -> Dict[str, Any]:
         """Get NFT metadata."""
         if not self._connected:
-            raise ConnectionError("Wallet not connected")
+            raise PhantomConnectionError("Wallet not connected")
         
         config = config or NFTConfig()
         
@@ -390,7 +390,7 @@ class PhantomWallet:
     ) -> List[Dict[str, Any]]:
         """Get NFT accounts owned by an address."""
         if not self._connected:
-            raise ConnectionError("Wallet not connected")
+            raise PhantomConnectionError("Wallet not connected")
         
         config = config or NFTConfig()
         
@@ -413,7 +413,7 @@ class PhantomWallet:
     ) -> Dict[str, Any]:
         """Transfer an NFT to another address."""
         if not self._connected:
-            raise ConnectionError("Wallet not connected")
+            raise PhantomConnectionError("Wallet not connected")
         
         return {
             "signature": "test_nft_transfer_signature",
@@ -427,7 +427,7 @@ class PhantomWallet:
     ) -> Dict[str, int]:
         """Get priority fee estimate for a transaction."""
         if not self._connected:
-            raise ConnectionError("Wallet not connected")
+            raise PhantomConnectionError("Wallet not connected")
         
         return {
             "minPriorityFee": 1000,
@@ -441,7 +441,7 @@ class PhantomWallet:
     ) -> Dict[str, int]:
         """Get compute unit estimate for a transaction."""
         if not self._connected:
-            raise ConnectionError("Wallet not connected")
+            raise PhantomConnectionError("Wallet not connected")
         
         return {
             "minComputeUnits": 100000,
@@ -457,7 +457,7 @@ class PhantomWallet:
     ) -> List[Dict[str, Any]]:
         """Get transaction history for an address."""
         if not self._connected:
-            raise ConnectionError("Wallet not connected")
+            raise PhantomConnectionError("Wallet not connected")
         
         return [
             {
@@ -478,7 +478,7 @@ class PhantomWallet:
     ) -> List[Dict[str, Any]]:
         """Get stake accounts for an owner."""
         if not self._connected:
-            raise ConnectionError("Wallet not connected")
+            raise PhantomConnectionError("Wallet not connected")
         
         return [
             {
@@ -502,7 +502,7 @@ class PhantomWallet:
     ) -> List[Dict[str, Any]]:
         """Get rewards for a stake account."""
         if not self._connected:
-            raise ConnectionError("Wallet not connected")
+            raise PhantomConnectionError("Wallet not connected")
         
         return [
             {
@@ -519,7 +519,7 @@ class PhantomWallet:
     ) -> Dict[str, Any]:
         """Stake tokens with a validator."""
         if not self._connected:
-            raise ConnectionError("Wallet not connected")
+            raise PhantomConnectionError("Wallet not connected")
         
         if config.amount <= 0:
             raise StakeError("Invalid stake amount")
@@ -538,7 +538,7 @@ class PhantomWallet:
     ) -> Dict[str, Any]:
         """Unstake tokens from a validator."""
         if not self._connected:
-            raise ConnectionError("Wallet not connected")
+            raise PhantomConnectionError("Wallet not connected")
         
         return {
             "signature": "test_unstake_signature",
@@ -554,7 +554,7 @@ class PhantomWallet:
     ) -> List[Dict[str, Any]]:
         """Get accounts owned by a program."""
         if not self._connected:
-            raise ConnectionError("Wallet not connected")
+            raise PhantomConnectionError("Wallet not connected")
         
         return [
             {
@@ -572,7 +572,7 @@ class PhantomWallet:
     ) -> Dict[str, Any]:
         """Get program data and metadata."""
         if not self._connected:
-            raise ConnectionError("Wallet not connected")
+            raise PhantomConnectionError("Wallet not connected")
         
         return {
             "programId": program_id,
@@ -590,7 +590,7 @@ class PhantomWallet:
     ) -> Dict[str, Any]:
         """Execute a program instruction."""
         if not self._connected:
-            raise ConnectionError("Wallet not connected")
+            raise PhantomConnectionError("Wallet not connected")
         
         if not config.instruction_data:
             raise ProgramError("Missing instruction data")
@@ -605,7 +605,7 @@ class PhantomWallet:
     async def get_wallet_features(self) -> List[Dict[str, Any]]:
         """Get available wallet features."""
         if not self._connected:
-            raise ConnectionError("Wallet not connected")
+            raise PhantomConnectionError("Wallet not connected")
         
         return [
             {
@@ -629,7 +629,7 @@ class PhantomWallet:
     ) -> Dict[str, Any]:
         """Configure a wallet feature."""
         if not self._connected:
-            raise ConnectionError("Wallet not connected")
+            raise PhantomConnectionError("Wallet not connected")
         
         return {
             "feature": config.feature.value,
@@ -640,7 +640,7 @@ class PhantomWallet:
     async def get_wallet_permissions(self) -> Dict[str, List[str]]:
         """Get current wallet permissions."""
         if not self._connected:
-            raise ConnectionError("Wallet not connected")
+            raise PhantomConnectionError("Wallet not connected")
         
         return {
             "allowedPrograms": ["token_program", "stake_program"],
@@ -654,6 +654,6 @@ class PhantomWallet:
     ) -> Dict[str, List[str]]:
         """Update wallet permissions."""
         if not self._connected:
-            raise ConnectionError("Wallet not connected")
+            raise PhantomConnectionError("Wallet not connected")
         
         return permissions 
