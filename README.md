@@ -18,47 +18,26 @@ With native support for models, MCP servers, decentralized compute providers, an
 
 ---
 
+## 📦 Installation
+
+You can install `pipeiq` directly from PyPI:
+
+```bash
+pip install pipeiq
+```
+
 ## Key Features
 
-### 🔗 Web2 + Web3 Interop
-- Unified routing for AI tools—OpenAI, HuggingFace, MCP servers, Filecoin compute, etc.
-- Tool registration and capability exposure via agent profiles
-
-### 🔑 Identity & Wallets
-- On-chain agent identities (machine & human-aligned)
-- Verifiable credentials & optional proof-of-personhood
-
-### 📊 Staking & Reputation
-- Reputation-linked staking mechanisms
-- Trust scores based on usage history & task completion
-
-### ⚖️ Agent Task Market
-- Publish & bid on decentralized agent tasks
-- Support for escrow, arbitration, and bounty resolution
-
-### 🌐 Context Anchoring
-- Persistent agent memory using IPFS / Arweave
-- Modular context schemas for task recall & chaining
-
-### 🤷 Intent Signaling & Routing
-- Message schema for goal-driven task delegation
-- Modular routing system between agents & services
+1. Integration with Phantom Wallet 
+2. Integration with Prime Intellect for Decentralized Compute
+3. Integration with Worldcoin for proof-of-personhood authentication
+4. Integration for Know Your Customer (KYC) operation with Persona
 
 ---
 
-## Architecture
+## 🚀 Usage
 
-The framework is built on two foundational layers:
-
-### 1. Blockchain-Native Primitives
-- ✅ Solana Smart Contracts (Rust)
-- ✨ Token Programs for $PIPEIQ
-- ⚖️ DAO governance (via Realms)
-
-### 2. Agent-Centric Primitives
-- 🤖 Agent Profiles & Permissions
-- 🚧 Task Markets & Context Anchors
-- 📢 Intent Signaling System
+We currently support a way to connect to decentralized resources. Usage examples can be found in the [`examples/`](./examples) folder.
 
 ---
 
@@ -66,8 +45,7 @@ The framework is built on two foundational layers:
 We welcome contributions from framework developers, cryptographers, and AI researchers. To get started:
 
 1. Fork this repository
-2. Read the [CONTRIBUTING.md](CONTRIBUTING.md) guide
-3. Open a Pull Request (PR) with clear description
+2. Open a Pull Request (PR) with clear description
 
 ---
 
@@ -79,8 +57,8 @@ MIT License. See [LICENSE](LICENSE) for details.
 ## Links
 - 🔗 [Whitepaper](https://pipeiq.ai/whitepaper)
 - 🌐 [Website](https://pipeiq.ai)
-- ✉️ Join our community: `discord.gg/pipeiq`  
-- 📰 Blog: [Coming Soon]  
+- ✉️ Join our community: `discord.gg/pipeiq`
+- X.com/pipeiqai
 
 ---
 
