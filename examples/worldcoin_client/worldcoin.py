@@ -19,8 +19,8 @@ async def main():
     3. Proof verification
     """
     # Replace with your actual app_id
-    APP_ID = "app_staging_fa5303a638554d31e1a461c95b92d68f"
-    ACTION = "proof_verification"
+    APP_ID = "<your app id here>"
+    ACTION = "<your action here>"
 
     async with WorldcoinClient(app_id=APP_ID) as wc:
         # Example 1: Get JWKS
