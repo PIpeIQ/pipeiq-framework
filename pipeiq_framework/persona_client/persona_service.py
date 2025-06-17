@@ -132,7 +132,7 @@ class CaseConfig:
     status: CaseStatus = CaseStatus.OPEN
     metadata: Optional[Dict[str, Any]] = None
     assignee: Optional[str] = None
-    tags: Optional[List[str]] = None
+    tags: Optional[List[str]] = field(default_factory=list)
 
 @dataclass
 class VerificationMethodConfig:
