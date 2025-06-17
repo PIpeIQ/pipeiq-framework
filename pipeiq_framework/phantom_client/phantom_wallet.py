@@ -160,12 +160,14 @@ class PhantomWallet:
         """Connect to Phantom wallet."""
         logger.info("🔗 Attempting to connect to Phantom wallet...")
         if not self._connected:
-            logger.info("Creating new session and establishing connection...")
-            self._session = aiohttp.ClientSession()
-            self._connected = True
+            # Validate public key first before creating any resources
             public_key = os.getenv("PHANTOM_PUBLIC_KEY")
             if not public_key:
                 raise ConnectionError("PHANTOM_PUBLIC_KEY environment variable is required")
+            
+            logger.info("Creating new session and establishing connection...")
+            self._session = aiohttp.ClientSession()
+            self._connected = True
             logger.info(f"📋 Using public key from environment: {public_key if len(public_key) <= 16 else f'{public_key[:8]}...{public_key[-8:]}'}")
             result = {
                 "connected": True,
