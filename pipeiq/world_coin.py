@@ -188,8 +188,6 @@ class WorldcoinClient:
 
 if __name__ == "__main__":
     async def main():
-        # ⚠️  Replace with your real staging or production app_id
-        APP_ID = "app_staging_fa5303a638554d31e1a461c95b92d68f"
         ACTION = "proof_verification"
 
         async with WorldcoinClient(app_id=APP_ID) as wc:
