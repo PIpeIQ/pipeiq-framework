@@ -8,6 +8,15 @@ from dataclasses import dataclass
 import json
 import aiohttp
 from datetime import datetime
+import os
+import logging
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+
+# Configure logging
+logger = logging.getLogger(__name__)
 
 class NetworkType(str, Enum):
     """Supported blockchain networks."""
@@ -145,30 +154,85 @@ class PhantomWallet:
         self.config = config or WalletConfig()
         self._connected = False
         self._session: Optional[aiohttp.ClientSession] = None
+        logger.info(f"🔧 PhantomWallet initialized with network: {self.config.network.value}")
     
     async def connect(self) -> Dict[str, Any]:
         """Connect to Phantom wallet."""
+        logger.info("🔗 Attempting to connect to Phantom wallet...")
         if not self._connected:
+            logger.info("Creating new session and establishing connection...")
             self._session = aiohttp.ClientSession()
             self._connected = True
-            return {
+            public_key = os.getenv("PHANTOM_PUBLIC_KEY")
+            if not public_key:
+                raise ConnectionError("PHANTOM_PUBLIC_KEY environment variable is required")
+            logger.info(f"📋 Using public key from environment: {public_key[:8]}...{public_key[-8:] if len(public_key) > 16 else public_key}")
+            result = {
                 "connected": True,
-                "publicKey": "test_public_key",
+                "publicKey": public_key,
                 "network": self.config.network.value
             }
+            logger.info(f"✅ Successfully connected to Phantom wallet on {self.config.network.value}")
+            return result
+        logger.info("⚡ Already connected to Phantom wallet")
         return {"connected": True}
     
     async def disconnect(self) -> None:
         """Disconnect from Phantom wallet."""
+        logger.info("🔌 Disconnecting from Phantom wallet...")
         if self._connected and self._session:
             await self._session.close()
             self._connected = False
+            logger.info("✅ Successfully disconnected from Phantom wallet")
+        else:
+            logger.info("⚠️ Wallet was not connected")
     
     async def get_balance(self, public_key: str) -> float:
-        """Get wallet balance."""
+        """Get wallet balance from Solana RPC."""
+        logger.info(f"💰 Fetching balance for public key: {public_key[:8]}...{public_key[-8:] if len(public_key) > 16 else public_key}")
         if not self._connected:
+            logger.error("❌ Cannot get balance: Wallet not connected")
             raise ConnectionError("Wallet not connected")
-        return 10.0  # Simulated balance
+        
+        try:
+            # Determine RPC endpoint based on network
+            rpc_endpoints = {
+                NetworkType.MAINNET: "https://api.mainnet-beta.solana.com",
+                NetworkType.TESTNET: "https://api.testnet.solana.com", 
+                NetworkType.DEVNET: "https://api.devnet.solana.com"
+            }
+            
+            rpc_url = rpc_endpoints.get(self.config.network, rpc_endpoints[NetworkType.MAINNET])
+            logger.info(f"🌐 Using Solana RPC endpoint: {rpc_url}")
+            
+            # Prepare RPC request
+            payload = {
+                "jsonrpc": "2.0",
+                "id": 1,
+                "method": "getBalance",
+                "params": [public_key]
+            }
+            
+            # Make RPC call
+            async with self._session.post(rpc_url, json=payload) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    if "result" in data and "value" in data["result"]:
+                        # Convert lamports to SOL (1 SOL = 1,000,000,000 lamports)
+                        lamports = data["result"]["value"]
+                        balance = lamports / 1_000_000_000
+                        logger.info(f"✅ Retrieved balance: {balance} SOL ({lamports:,} lamports)")
+                        return balance
+                    else:
+                        logger.error(f"❌ Invalid RPC response: {data}")
+                        raise ConnectionError(f"Invalid RPC response: {data}")
+                else:
+                    logger.error(f"❌ RPC request failed with status {response.status}")
+                    raise ConnectionError(f"RPC request failed with status {response.status}")
+                    
+        except Exception as e:
+            logger.error(f"❌ Failed to fetch balance: {e}")
+            raise ConnectionError(f"Failed to fetch balance from Solana RPC: {e}")
     
     async def send_transaction(
         self,
@@ -216,9 +280,12 @@ class PhantomWallet:
         if not self._connected:
             raise ConnectionError("Wallet not connected")
         
+        public_key = os.getenv("PHANTOM_PUBLIC_KEY")
+        if not public_key:
+            raise ConnectionError("PHANTOM_PUBLIC_KEY environment variable is required")
         return {
             "signature": "test_signature",
-            "publicKey": "test_public_key"
+            "publicKey": public_key
         }
     
     async def verify_signature(
@@ -246,7 +313,10 @@ class PhantomWallet:
         if not self._connected:
             raise ConnectionError("Wallet not connected")
         
-        return ["test_public_key"]
+        public_key = os.getenv("PHANTOM_PUBLIC_KEY")
+        if not public_key:
+            raise ConnectionError("PHANTOM_PUBLIC_KEY environment variable is required")
+        return [public_key]
 
     # New methods for token swaps
     async def get_swap_quote(

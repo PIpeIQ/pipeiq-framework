@@ -1,161 +1,138 @@
-# World Chain Integration
+# Phantom Wallet Integration
 
 ## Overview
-This PR adds comprehensive World Chain integration to the PipeIQ framework, enabling seamless interaction with the World Chain network for human verification, mini app deployment, token bridging, and more.
+This PR relates to the Phantom wallet integration for the PipeIQ framework, enabling seamless interaction with Solana blockchain through the Phantom wallet for transactions, balance checks, token swaps, NFT operations, and more.
 
-## Features Added
+## 🔧 Setup Instructions
 
-### Core Functionality
-- **Human Verification**: Verify human identity using World ID
-- **Mini App Management**: Deploy and update mini apps on World Chain
-- **Token Bridging**: Bridge tokens between different chains
-- **Node Management**: Monitor and manage World Chain nodes
+### 1. Install Phantom Wallet Extension
+- **Download**: Visit [phantom.com/download](https://phantom.com/download)
+- **Browser Support**: Available for Chrome, Firefox, Brave, Edge
 
-### Advanced Features
-- **Rate Limiting**: Token bucket algorithm with configurable limits
-- **Batch Operations**: Support for batch token bridging and mini app deployment
-- **Transaction History**: Comprehensive transaction tracking and filtering
-- **Cache Management**: Efficient caching for node health and token balances
-- **Error Recovery**: Enhanced error handling with automatic retries
+### 2. Create or Import Wallet
+- **New Wallet**: Open Phantom → "Create New Wallet" → Set password → **Save your Secret Recovery Phrase**
+- **Existing Wallet**: Open Phantom → "I already have a wallet" → Enter your Secret Recovery Phrase
 
-### Performance Optimizations
-- Asynchronous operations with proper rate limiting
-- Efficient batch processing
-- Smart caching strategies
-- Concurrent operation support
+### 3. Get Your Public Key (Wallet Address)
+1. Open Phantom wallet extension
+2. Click on your wallet name at the top
+3. Click **"Copy Address"** or click the copy icon next to your address
 
-## Technical Details
+### 4. Environment Configuration
+Create a `.env` file in the project root directory (`pipeiq-framework/.env`):
 
-### New Files
-- `pipeiq/world_chain.py`: Main World Chain integration module
-- `tests/test_world_chain.py`: Comprehensive test suite
+```bash
+# Required: Your Phantom wallet public key
+PHANTOM_PUBLIC_KEY=your_public_key_here_without_quotes
 
-### Modified Files
-- `pipeiq/__init__.py`: Added World Chain service exports
-- `README.md`: Updated documentation
-
-### Dependencies
-- No new external dependencies added
-- Uses existing `aiohttp` for async HTTP requests
-
-## Testing
-
-### Test Coverage
-- Unit tests for all new features
-- Edge case testing
-- Performance testing
-- Integration testing
-- Concurrent operation testing
-- Error recovery testing
-
-### Test Categories
-1. **Core Functionality Tests**
-   - Human verification
-   - Mini app deployment
-   - Token bridging
-   - Node management
-
-2. **Advanced Feature Tests**
-   - Rate limiting
-   - Batch operations
-   - Transaction history
-   - Cache management
-
-3. **Edge Cases**
-   - Invalid inputs
-   - Network errors
-   - Rate limit exceeded
-   - Concurrent operations
-
-4. **Performance Tests**
-   - Large batch operations
-   - Rate limiting under load
-   - Cache efficiency
-
-## Documentation
-
-### Code Documentation
-- Comprehensive docstrings for all classes and methods
-- Type hints for better code understanding
-- Clear error messages and handling
-
-### Usage Examples
-```python
-# Initialize World Chain service
-async with WorldChainService(wallet) as service:
-    # Verify human
-    result = await service.verify_human(proof)
-    
-    # Deploy mini app
-    app = await service.deploy_mini_app(app_data)
-    
-    # Bridge tokens
-    bridge = await service.bridge_token(
-        TokenType.USDC,
-        "1000",
-        "ethereum"
-    )
-    
-    # Get transaction history
-    history = await service.get_transaction_history(
-        transaction_type=TransactionType.BRIDGE
-    )
+# Optional: Network configuration (defaults to mainnet)
+# PHANTOM_NETWORK=mainnet  # or testnet, devnet
 ```
 
-## Review Guidelines
+**⚠️ Important**: 
+- **Never share your Secret Recovery Phrase** - only use your public key
+- The public key is safe to share (it's just your wallet address)
 
-### Code Review Focus Areas
-1. **Error Handling**
-   - Verify proper error handling and recovery
-   - Check error messages are clear and helpful
-   - Ensure all edge cases are covered
+## 🧪 Testing
 
-2. **Performance**
-   - Review rate limiting implementation
-   - Check batch operation efficiency
-   - Verify cache management
+### Basic Functionality Tests
+Run the following commands to verify Phantom integration:
 
-3. **Security**
-   - Verify proper signature handling
-   - Check input validation
-   - Review error message security
+```bash
+# Run all Phantom wallet tests
+python tests/test_phantom.py
 
-4. **Testing**
-   - Verify test coverage is comprehensive
-   - Check edge cases are properly tested
-   - Review performance test assertions
+```
 
-### Testing Instructions
-1. Run the test suite:
-   ```bash
-   pytest tests/test_world_chain.py -v
-   ```
+### Expected Test Results
+- ✅ **Wallet Connection**: Should connect to Phantom wallet
+- ✅ **Balance Retrieval**: Should fetch real SOL balance from Solana RPC
+- ✅ **Network Selection**: Should work with mainnet/testnet/devnet
+- ✅ **Error Handling**: Should handle connection errors gracefully
 
-2. Check test coverage:
-   ```bash
-   pytest tests/test_world_chain.py --cov=pipeiq.world_chain
-   ```
+### Manual Testing Checklist
+- [ ] Phantom extension is installed
+- [ ] `.env` file contains valid `PHANTOM_PUBLIC_KEY`
+- [ ] Tests pass with real Solana RPC calls
+- [ ] Balance shows correct SOL amount (may be 0.0 for new wallets)
+- [ ] Connection and disconnection work properly
 
-3. Run performance tests:
-   ```bash
-   pytest tests/test_world_chain.py -m "performance" -v
-   ```
+## 🌐 Network Types
 
-## Breaking Changes
-- None. This is a new feature addition.
+### **MAINNET** (Production)
+- **Use for**: Live applications, real trading
+- **RPC**: `https://api.mainnet-beta.solana.com`
+- **Tokens**: Real SOL with actual value
+- **Fees**: Real transaction costs
 
-## Migration Guide
-- No migration required. This is a new feature.
+### **TESTNET** (Testing)
+- **Use for**: Application testing before mainnet
+- **RPC**: `https://api.testnet.solana.com`
+- **Tokens**: Test SOL (no real value)
+- **Fees**: Test transaction costs
 
-## Related Issues
-- Closes #[Issue number] - Add World Chain integration
-- Related to #[Issue number] - Enhance error handling
+### **DEVNET** (Development)
+- **Use for**: Development and experimentation
+- **RPC**: `https://api.devnet.solana.com`
+- **Tokens**: Free test SOL from faucets
+- **Fees**: Minimal test costs
 
-## Checklist
-- [x] Code follows project style guidelines
-- [x] All tests pass
-- [x] Documentation is updated
-- [x] No new dependencies added
-- [x] Performance tests included
-- [x] Error handling is comprehensive
-- [x] Security considerations addressed 
+## 🔍 Code Review Focus Areas
+
+### 1. **Security**
+- Verify no private keys or secret phrases are exposed
+- Check proper error handling for RPC failures
+- Ensure environment variables are properly validated
+
+### 2. **Error Handling**
+- Network connection failures
+- Invalid public keys
+- RPC timeout scenarios
+- Wallet not connected states
+
+### 3. **Performance**
+- Async/await patterns properly implemented
+- HTTP session management
+- Proper resource cleanup (connection closing)
+
+### 4. **Testing**
+- Real RPC calls vs mocked responses
+- Edge cases covered
+- Network switching functionality
+
+## 📝 Usage Example
+
+```python
+from pipeiq.phantom import PhantomWallet, WalletConfig, NetworkType
+
+# Initialize wallet
+config = WalletConfig(network=NetworkType.MAINNET)
+wallet = PhantomWallet(config)
+
+# Connect and get balance
+async def main():
+    # Connect to wallet
+    result = await wallet.connect()
+    print(f"Connected: {result['connected']}")
+    print(f"Public Key: {result['publicKey']}")
+    
+    # Get balance
+    balance = await wallet.get_balance(result['publicKey'])
+    print(f"Balance: {balance} SOL")
+    
+    # Disconnect
+    await wallet.disconnect()
+```
+
+## ⚠️ Troubleshooting
+
+### Common Issues
+1. **"Wallet not connected"**: Ensure `await wallet.connect()` is called first
+2. **"Invalid public key"**: Verify your `PHANTOM_PUBLIC_KEY` in `.env` file
+3. **"RPC request failed"**: Check network connection and RPC endpoint
+4. **"0.0 SOL balance"**: Normal for new wallets - send SOL to test
+
+## 🔗 Related Links
+- [Phantom Wallet Official Site](https://phantom.com)
+- [Solana Official Documentation](https://docs.solana.com)
+- [Solana RPC API Reference](https://docs.solana.com/api)

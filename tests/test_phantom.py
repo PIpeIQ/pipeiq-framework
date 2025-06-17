@@ -1,4 +1,5 @@
 import pytest
+import logging
 from unittest.mock import AsyncMock, patch
 from datetime import datetime
 from pipeiq.phantom import (
@@ -27,16 +28,28 @@ from pipeiq.phantom import (
     FeatureError
 )
 
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
 @pytest.mark.asyncio
 async def test_wallet_initialization():
     """Test wallet initialization with default and custom config."""
+    logger.info("🚀 Starting wallet initialization test")
+    
     # Test with default config
+    logger.info("Testing default wallet configuration...")
     wallet = PhantomWallet()
     assert wallet.config.network == NetworkType.MAINNET
     assert not wallet.config.auto_approve
     assert wallet.config.timeout == 30000
+    logger.info("✅ Default wallet configuration test passed")
 
     # Test with custom config
+    logger.info("Testing custom wallet configuration...")
     custom_config = WalletConfig(
         network=NetworkType.TESTNET,
         auto_approve=True,
@@ -46,15 +59,22 @@ async def test_wallet_initialization():
     assert wallet.config.network == NetworkType.TESTNET
     assert wallet.config.auto_approve
     assert wallet.config.timeout == 60000
+    logger.info("✅ Custom wallet configuration test passed")
 
 @pytest.mark.asyncio
 async def test_connect():
     """Test wallet connection."""
+    logger.info("🔗 Starting wallet connection test")
     wallet = PhantomWallet()
+    logger.info("Attempting to connect to Phantom wallet...")
     result = await wallet.connect()
+    logger.info(f"Connection result: {result}")
     assert result["connected"]
     assert "publicKey" in result
     assert wallet._connected
+    logger.info(f"✅ Wallet connected successfully with public key: {result.get('publicKey')}")
+    # Clean up
+    await wallet.disconnect()
 
 @pytest.mark.asyncio
 async def test_disconnect():
@@ -67,11 +87,18 @@ async def test_disconnect():
 @pytest.mark.asyncio
 async def test_get_balance():
     """Test getting wallet balance."""
+    logger.info("💰 Starting wallet balance test")
     wallet = PhantomWallet()
-    await wallet.connect()
-    balance = await wallet.get_balance("test_public_key")
+    connection_result = await wallet.connect()
+    public_key = connection_result.get("publicKey", "test_public_key")
+    logger.info("Fetching wallet balance...")
+    balance = await wallet.get_balance(public_key)
+    logger.info(f"Retrieved balance: {balance} SOL")
     assert isinstance(balance, float)
     assert balance >= 0
+    logger.info("✅ Balance retrieval test passed")
+    # Clean up
+    await wallet.disconnect()
 
 @pytest.mark.asyncio
 async def test_get_balance_not_connected():
@@ -667,4 +694,24 @@ async def test_feature_error_handling():
     with pytest.raises(FeatureError):
         await wallet.configure_wallet_feature(WalletFeatureConfig(
             feature="invalid_feature"  # type: ignore
-        )) 
+        ))
+
+# Main execution for direct running
+if __name__ == "__main__":
+    import asyncio
+    
+    async def run_basic_tests():
+        """Run basic tests when script is executed directly."""
+        logger.info("🎯 Running Phantom wallet tests directly...")
+        
+        try:
+            await test_wallet_initialization()
+            await test_connect()
+            await test_get_balance()
+            logger.info("🎉 All basic tests completed successfully!")
+        except Exception as e:
+            logger.error(f"❌ Test failed: {e}")
+            raise
+    
+    # Run the tests
+    asyncio.run(run_basic_tests()) 
