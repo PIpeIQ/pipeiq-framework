@@ -1,13 +1,15 @@
 # worldcoin_client.py
 from typing import Dict, Any, Optional
 import httpx
-from logger import logger
+import logging
 from datetime import datetime
 import asyncio
 import json
 import os
 from dotenv import load_dotenv
 
+
+logger = logging.getLogger(__name__)
 # Load environment variables from .env file
 load_dotenv()
 
