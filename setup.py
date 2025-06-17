@@ -16,6 +16,8 @@ setup(
         "aiohttp>=3.8.0",      # For async HTTP requests
         "backoff>=2.2.1",
         "cachetools>=5.3.0",
+        "asyncio>=3.4.3",      # For async/await support
+        "typing-extensions>=4.0.0",  # For enhanced type hints
     ],
     extras_require={
         "dev": [
@@ -26,6 +28,12 @@ setup(
             "isort>=5.12.0",
             "mypy>=1.0.0",
             "flake8>=6.0.0",
+        ],
+        "hellomoon": [
+            "aiohttp>=3.8.0",
+            "websockets>=11.0.3",
+            "cachetools>=5.3.0",
+            "backoff>=2.2.1",
         ]
     },
     author="PipeIQ",

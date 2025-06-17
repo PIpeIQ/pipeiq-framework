@@ -1779,7 +1779,7 @@ async def get_inquiry_with_cache_fallback(persona_service, inquiry_id):
     try:
         # Try with cache
         return await persona_service.get_inquiry(inquiry_id)
-    except PersonaError as e:
+    except PersonaError:
         # Clear cache on error
         await persona_service.clear_cache()
         # Retry without cache
@@ -2153,19 +2153,19 @@ These guidelines and best practices help ensure:
 - Secure operations
 - Easy maintenance and monitoring
 
-# HelloMoon Connector
+# HelloMoon MCP Connector
 
-The HelloMoon connector provides a comprehensive interface to interact with the HelloMoon API, supporting both REST API and WebSocket connections.
+The HelloMoon MCP connector provides a comprehensive interface for interacting with the HelloMoon API, following the Model Context Protocol (MCP) pattern.
 
 ## Features
 
-- **REST API Support**: Access all HelloMoon API endpoints
-- **WebSocket Support**: Real-time updates via WebSocket connections
-- **Rate Limiting**: Automatic rate limit handling with token bucket algorithm
-- **Caching**: TTL-based caching for GET requests
-- **Error Handling**: Comprehensive error handling with retries
-- **Batch Operations**: Efficient batch requests for multiple items
-- **Type Safety**: Full type hints and Pydantic models
+- **REST API Support**: Full coverage of HelloMoon's REST API endpoints
+- **WebSocket Support**: Real-time data streaming capabilities
+- **Rate Limiting**: Built-in rate limiting with token bucket algorithm
+- **Caching**: Configurable caching with TTL and size limits
+- **Error Handling**: Comprehensive error handling with retry mechanism
+- **Type Safety**: Full type hints and Protocol-based interface
+- **Resource Management**: Proper resource cleanup with context managers
 
 ## Installation
 
@@ -2175,17 +2175,18 @@ pip install pipeiq[hellomoon]
 
 ## Configuration
 
-The connector can be configured using the `HelloMoonConfig` class:
-
 ```python
-from pipeiq.hellomoon import HelloMoonConfig
+from pipeiq.hellomoon_mcp import HelloMoonConfig
 
 config = HelloMoonConfig(
-    api_key="your_api_key",  # Or set HELLOMOON_API_KEY environment variable
-    rate_limit=200,          # Requests per minute
-    cache_ttl=600,           # Cache TTL in seconds
-    cache_size=2000,         # Maximum cache items
-    timeout=30               # Request timeout in seconds
+    api_key="your_api_key",
+    base_url="https://api.hellomoon.io/v1",  # Optional
+    ws_url="wss://api.hellomoon.io/v1/ws",   # Optional
+    timeout=30,                              # Optional
+    max_retries=3,                           # Optional
+    rate_limit=100,                          # Optional
+    cache_ttl=300,                           # Optional
+    cache_size=1000                          # Optional
 )
 ```
 
@@ -2194,87 +2195,81 @@ config = HelloMoonConfig(
 ### Basic Usage
 
 ```python
-from pipeiq.hellomoon import HelloMoonClient
+from pipeiq.hellomoon_mcp import HelloMoonProvider, HelloMoonConfig
 
-async def main():
-    async with HelloMoonClient() as client:
-        # Get account info
-        account = await client.get_account_info("address")
-        print(f"Account data: {account}")
+# Create configuration
+config = HelloMoonConfig(api_key="your_api_key")
 
-        # Get NFT metadata
-        nft = await client.get_nft_metadata("mint")
-        print(f"NFT data: {nft}")
-
-asyncio.run(main())
+# Use the provider
+async with HelloMoonProvider(config) as provider:
+    # Get the model interface
+    model = provider.get_model()
+    
+    # Get NFT metadata
+    nft_data = await model.get_nft_metadata("mint_address")
+    
+    # Get market data
+    market_data = await model.get_market_data("mint_address")
 ```
 
-### Batch Operations
+### Available Operations
 
+The HelloMoon model interface provides the following operations:
+
+#### Account Information
 ```python
-async def batch_example():
-    async with HelloMoonClient() as client:
-        # Get multiple accounts
-        accounts = await client.batch_get_accounts([
-            "address1",
-            "address2"
-        ])
-
-        # Get multiple transactions
-        transactions = await client.batch_get_transactions([
-            "signature1",
-            "signature2"
-        ])
+account_info = await model.get_account_info("address")
 ```
 
-### WebSocket Subscriptions
-
+#### Transaction Information
 ```python
-async def subscription_example():
-    async with HelloMoonClient() as client:
-        async def handle_transfer(data):
-            print(f"New transfer: {data}")
-
-        # Subscribe to token transfers
-        await client.subscribe_to_token_transfers(
-            "token_mint",
-            handle_transfer
-        )
+tx_info = await model.get_transaction_info("signature")
 ```
 
-### Market Data
-
+#### NFT Operations
 ```python
-async def market_data_example():
-    async with HelloMoonClient() as client:
-        # Get current market data
-        market_data = await client.get_market_data("token_mint")
-        
-        # Get price history
-        price_history = await client.get_token_price_history(
-            "token_mint",
-            timeframe="1d",
-            limit=100
-        )
+# Get NFT metadata
+nft_data = await model.get_nft_metadata("mint_address")
+
+# Get market data
+market_data = await model.get_market_data("mint_address")
+
+# Get token information
+token_info = await model.get_token_info("mint_address")
+
+# Get collection information
+collection_info = await model.get_collection_info("collection_id")
 ```
 
-### Token Information
-
+#### Market Operations
 ```python
-async def token_example():
-    async with HelloMoonClient() as client:
-        # Get token holders
-        holders = await client.get_token_holders(
-            "token_mint",
-            limit=100,
-            offset=0
-        )
-        
-        # Get token transfers
-        transfers = await client.get_token_transfers(
-            "token_mint",
-            limit=100
-        )
+# Get recent sales
+sales = await model.get_recent_sales(
+    collection_id="collection_id",
+    limit=100,
+    offset=0
+)
+
+# Get active listings
+listings = await model.get_active_listings(
+    collection_id="collection_id",
+    limit=100,
+    offset=0
+)
+
+# Get active offers
+offers = await model.get_active_offers(
+    collection_id="collection_id",
+    limit=100,
+    offset=0
+)
+
+# Get active bids
+bids = await model.get_active_bids(
+    collection_id="collection_id",
+    limit=100,
+    offset=0
+)
 ```
 
 ## Error Handling
@@ -2282,69 +2277,133 @@ async def token_example():
 The connector provides specific exception classes for different error scenarios:
 
 ```python
-from pipeiq.hellomoon import HelloMoonError, RateLimitError, AuthenticationError
+from pipeiq.hellomoon_mcp import (
+    HelloMoonError,
+    ConnectionError,
+    AuthenticationError,
+    RateLimitError,
+    ValidationError
+)
 
-async def error_handling_example():
-    try:
-        async with HelloMoonClient() as client:
-            await client.get_account_info("address")
-    except RateLimitError:
-        print("Rate limit exceeded")
-    except AuthenticationError:
-        print("Invalid API key")
-    except HelloMoonError as e:
-        print(f"API error: {e}")
+try:
+    async with HelloMoonProvider(config) as provider:
+        model = provider.get_model()
+        data = await model.get_nft_metadata("mint_address")
+except AuthenticationError:
+    print("Invalid API key")
+except RateLimitError:
+    print("Rate limit exceeded")
+except ConnectionError:
+    print("Connection error")
+except ValidationError:
+    print("Invalid input")
+except HelloMoonError:
+    print("Other HelloMoon error")
 ```
 
 ## Best Practices
 
-1. **Use Context Manager**: Always use the `async with` context manager to ensure proper resource cleanup
-2. **Environment Variables**: Set your API key using the `HELLOMOON_API_KEY` environment variable
-3. **Rate Limiting**: Configure appropriate rate limits based on your API tier
-4. **Caching**: Adjust cache TTL and size based on your data freshness requirements
-5. **Error Handling**: Implement proper error handling for production use
-6. **WebSocket Management**: Handle WebSocket reconnection in production environments
+1. **Resource Management**
+   - Always use the provider as a context manager
+   - Resources are automatically cleaned up when exiting the context
+
+2. **Rate Limiting**
+   - The connector automatically handles rate limiting
+   - Configure appropriate rate limits based on your API tier
+
+3. **Caching**
+   - Use caching for frequently accessed data
+   - Configure cache TTL and size based on your needs
+
+4. **Error Handling**
+   - Implement proper error handling for all operations
+   - Use specific exception classes for different error types
+
+5. **Async/Await**
+   - All operations are asynchronous
+   - Use `async/await` syntax when calling methods
 
 ## API Reference
 
-### HelloMoonClient
+### HelloMoonProvider
 
-Main client class for interacting with the HelloMoon API.
+The main entry point for the connector.
 
-#### Methods
+```python
+provider = HelloMoonProvider(config)
+model = provider.get_model()
+```
 
-- `get_account_info(address: str) -> Dict`
-- `get_transaction(signature: str) -> Dict`
-- `get_nft_metadata(mint: str) -> Dict`
-- `get_nft_collection(collection_address: str) -> Dict`
-- `get_market_data(mint: str) -> Dict`
-- `get_token_price_history(mint: str, timeframe: str = "1d", limit: int = 100) -> List[Dict]`
-- `get_token_holders(mint: str, limit: int = 100, offset: int = 0) -> List[Dict]`
-- `get_token_transfers(mint: str, limit: int = 100, before: Optional[str] = None) -> List[Dict]`
-- `get_program_instructions(program_id: str, limit: int = 100, before: Optional[str] = None) -> List[Dict]`
-- `get_account_changes(address: str, limit: int = 100, before: Optional[str] = None) -> List[Dict]`
-- `batch_get_accounts(addresses: List[str]) -> List[Dict]`
-- `batch_get_transactions(signatures: List[str]) -> List[Dict]`
-- `subscribe_to_token_transfers(mint: str, callback: Callable[[Dict], None])`
+### HelloMoonModel
 
-### HelloMoonConfig
+Protocol defining the interface for HelloMoon data operations.
 
-Configuration class for the HelloMoon client.
+```python
+class HelloMoonModel(Protocol):
+    async def get_account_info(self, address: str) -> Dict[str, Any]: ...
+    async def get_transaction_info(self, signature: str) -> Dict[str, Any]: ...
+    async def get_nft_metadata(self, mint_address: str) -> Dict[str, Any]: ...
+    async def get_market_data(self, mint_address: str) -> Dict[str, Any]: ...
+    async def get_token_info(self, mint_address: str) -> Dict[str, Any]: ...
+    async def get_collection_info(self, collection_id: str) -> Dict[str, Any]: ...
+    async def get_recent_sales(self, collection_id: Optional[str] = None, limit: int = 100, offset: int = 0) -> Dict[str, Any]: ...
+    async def get_active_listings(self, collection_id: Optional[str] = None, limit: int = 100, offset: int = 0) -> Dict[str, Any]: ...
+    async def get_active_offers(self, collection_id: Optional[str] = None, limit: int = 100, offset: int = 0) -> Dict[str, Any]: ...
+    async def get_active_bids(self, collection_id: Optional[str] = None, limit: int = 100, offset: int = 0) -> Dict[str, Any]: ...
+```
 
-#### Attributes
+### Configuration Classes
 
-- `api_key: str`
-- `base_url: str`
-- `ws_url: str`
-- `timeout: int`
-- `max_retries: int`
-- `rate_limit: int`
-- `cache_ttl: int`
-- `cache_size: int`
+#### HelloMoonConfig
+```python
+@dataclass
+class HelloMoonConfig:
+    api_key: str
+    base_url: str = "https://api.hellomoon.io/v1"
+    ws_url: str = "wss://api.hellomoon.io/v1/ws"
+    timeout: int = 30
+    max_retries: int = 3
+    rate_limit: int = 100
+    cache_ttl: int = 300
+    cache_size: int = 1000
+```
+
+#### RateLimitConfig
+```python
+@dataclass
+class RateLimitConfig:
+    requests_per_minute: int
+    burst_size: int = 1
+    window_size: int = 60
+```
+
+#### RetryConfig
+```python
+@dataclass
+class RetryConfig:
+    max_retries: int = 3
+    initial_delay: float = 1.0
+    max_delay: float = 30.0
+    retry_on_status_codes: List[int] = [429, 500, 502, 503, 504]
+```
+
+#### CacheConfig
+```python
+@dataclass
+class CacheConfig:
+    ttl: int = 300
+    max_size: int = 1000
+    enabled: bool = True
+```
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests for your changes
+5. Run the test suite
+6. Submit a pull request
 
 ## License
 
