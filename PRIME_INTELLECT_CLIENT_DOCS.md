@@ -81,7 +81,7 @@ async with PrimeIntellectClient("your-api-key") as client:
 
 Both `get_availability()` and `get_cluster_availability()` support these parameters:
 
-- **regions**: List of regions (e.g., `["united_states", "canada"]`)
+- **regions**: List of regions (e.g., `["united_states", "canada", "eu_west"]`)
 - **gpu_type**: GPU model (e.g., `"H100_80GB"`, `"A100_80GB"`)
 - **gpu_count**: Number of GPUs needed
 - **socket**: Socket type (e.g., `"PCIe"`, `"SXM5"`)
@@ -157,7 +157,7 @@ for cluster in clusters:
 ### Compare Regions
 ```python
 us_offers = await client.get_availability(regions=["united_states"])
-eu_offers = await client.get_availability(regions=["europe"])
+eu_offers = await client.get_availability(regions=["eu_west", "eu_east"])
 ```
 
 ## Requirements
