@@ -377,8 +377,6 @@ class PersonaService:
         if self.session:
             await self.session.close()
 
-    @with_retry(RetryConfig())
-    @with_cache(Cache(CacheConfig()))
     async def _make_request(
         self,
         method: str,
@@ -391,25 +389,52 @@ class PersonaService:
         
         await self.rate_limiter.acquire()
         
-        async with self.session.request(
-            method,
-            f"{self.base_url}/{endpoint}",
-            **kwargs
-        ) as response:
-            if response.status >= 400:
-                error_text = await response.text()
-                if response.status == 429:
-                    raise PersonaError("Rate limit exceeded")
-                raise PersonaError(f"API error: {error_text}")
-            return await response.json()
+        try:
+            async with self.session.request(
+                method,
+                f"{self.base_url}/{endpoint}",
+                **kwargs
+            ) as response:
+                if response.status >= 400:
+                    error_text = await response.text()
+                    if response.status == 401:
+                        raise PersonaError("Authentication failed - check API key")
+                    elif response.status == 429:
+                        raise PersonaError("Rate limit exceeded")
+                    elif response.status in [400, 404]:
+                        # These are expected errors that indicate API is reachable
+                        raise PersonaError(f"API error: {error_text}")
+                    else:
+                        raise PersonaError(f"API error: {error_text}")
+                return await response.json()
+        except aiohttp.ClientError as e:
+            raise ConnectionError(f"Network error: {str(e)}")
+        except json.JSONDecodeError as e:
+            raise PersonaError(f"Invalid JSON response: {str(e)}")
 
-    def _make_request_with_retry(self, *args, **kwargs):
+    async def _make_request_with_retry(self, *args, **kwargs):
         """Wrapper method that applies retry and cache decorators using instance configurations."""
-        @with_retry(self.retry_config)
-        @with_cache(self.cache)
-        async def decorated_request(*args, **kwargs):
-            return await self._make_request(*args, **kwargs)
-        return decorated_request(*args, **kwargs)
+        # Apply retry logic
+        last_exception = None
+        delay = self.retry_config.initial_delay
+        
+        for attempt in range(self.retry_config.max_retries + 1):
+            try:
+                return await self._make_request(*args, **kwargs)
+            except (ConnectionError, PersonaError) as e:
+                last_exception = e
+                
+                # Don't retry on certain errors
+                if isinstance(e, PersonaError) and "Authentication failed" in str(e):
+                    raise
+                
+                if attempt < self.retry_config.max_retries:
+                    # Calculate next delay based on strategy
+                    if self.retry_config.strategy == RetryStrategy.EXPONENTIAL_BACKOFF:
+                        delay *= 2
+                    await asyncio.sleep(delay)
+                else:
+                    raise last_exception
 
     async def create_inquiry(self, config: InquiryConfig) -> Dict[str, Any]:
         """Create a new identity verification inquiry.
