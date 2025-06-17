@@ -13,10 +13,7 @@ load_dotenv()
 
 # Configuration from environment variables
 APP_ID = os.getenv("WORLDCOIN_APP_ID")
-ACTION = os.getenv("WORLDCOIN_ACTION", "proof_verification")
-BASE_URL = os.getenv("WORLDCOIN_BASE_URL", "https://developer.worldcoin.org")
-TIMEOUT = float(os.getenv("WORLDCOIN_TIMEOUT", "10.0"))
-USER_AGENT = os.getenv("WORLDCOIN_USER_AGENT", "worldcoin-client/0.1")
+
 
 # Validate required environment variables
 if not APP_ID:
