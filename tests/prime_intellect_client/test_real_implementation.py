@@ -15,7 +15,7 @@ from typing import Optional
 # Add the pipeiq_framework to the path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..', 'pipeiq_framework'))
 
-from prime_intellect_client import (
+from pipeiq_framework.prime_intellect_client import (
     PrimeIntellectClient,
     GPUAvailability,
     ValidationError,

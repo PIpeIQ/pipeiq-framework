@@ -12,11 +12,6 @@ An async Python client library for the Prime Intellect REST API. This library pr
 - 📊 **Resource filtering** by region, GPU type, count, etc.
 - 🔧 **Easy to use** context manager API
 
-## Installation
-
-```bash
-pip install prime-intellect-client
-```
 
 ## Quick Start
 
