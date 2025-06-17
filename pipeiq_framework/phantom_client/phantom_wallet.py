@@ -175,7 +175,14 @@ class PhantomWallet:
             logger.info(f"✅ Successfully connected to Phantom wallet on {self.config.network.value}")
             return result
         logger.info("⚡ Already connected to Phantom wallet")
-        return {"connected": True}
+        public_key = os.getenv("PHANTOM_PUBLIC_KEY")
+        if not public_key:
+            raise ConnectionError("PHANTOM_PUBLIC_KEY environment variable is required")
+        return {
+            "connected": True,
+            "publicKey": public_key,
+            "network": self.config.network.value
+        }
     
     async def disconnect(self) -> None:
         """Disconnect from Phantom wallet."""
