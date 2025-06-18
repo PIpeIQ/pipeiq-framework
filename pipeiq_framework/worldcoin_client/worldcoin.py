@@ -127,7 +127,7 @@ class WorldcoinClient:
         merkle_root: str,
         proof: str,
         action: str,
-        signal_hash: str,
+        # signal_hash: str,
         verification_level: str = "orb",  # Default to "orb" verification level
     ) -> Dict[str, Any]:
         """
@@ -153,7 +153,7 @@ class WorldcoinClient:
             "merkle_root": merkle_root,
             "proof": proof,
             "action": action,
-            "signal_hash": signal_hash,
+            # "signal_hash": signal_hash,
             "verification_level": verification_level,
         }
 

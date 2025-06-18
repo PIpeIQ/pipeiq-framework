@@ -42,10 +42,10 @@ async def main():
         # Example 3: Verify proof
         sample = dict(
             nullifier_hash="0x1004b481f0859419b7ad5b8b42f43d6095eea434ad3576c2104a81fac473b8d4",
-            merkle_root="0x0377e1cad94947bc30964dbf23ccce08488f33aafc586692897c324e03ef9531",
-            proof="0x22a0d38550a020800c3b533d58eaf5d3eac0ddd20d384338…7e7c0d747db1fce8d23d928198f7823a07c1a6a2b6d31e27f",  # Replace with actual proof
+            merkle_root="0x13fd28feaef242a222144e868d10f11b9a9424a2faa9c6c18170b35ad8d7cff8",
+            proof="0x110221434a32a563d04e342aa468eb0ad28ddaf7dc59dfaf43d9478b75aec243127ef70080d8606d21d3a3b7b686dfc73175d6e9be3aecbc6c07f3dbdea1a065265952627a1a916912c055c23220c9096354fbfe1c40db1eac1d5aa6f62731501966269f18e31fedbf7e21de692eccb1a2382a79a1e25cc8679306c12e3cf72a126de2b8c7a67bced158ff8a79cebd85610aab827ff5eb7fc2eaae7eb511635d2014e20229d2419278867eb5957098cd83945e3ff0109c3a45abed64c8564b901b4007e79258b5a0c40a1b59c8bd93bdf3c79ddec8397b4015df2e0c4dadf2f11cc52e416477c39c301e98ca508d2cbc43423606c7c7c502ab5fa899e821f0af",  # Replace with actual proof
             action=ACTION,
-            signal_hash="0x00c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a4",
+            # signal_hash="0x00c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a4",
             verification_level="orb",
         )
         try:
